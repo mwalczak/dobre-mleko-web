@@ -10,11 +10,15 @@ The API is [dobre-mleko-be](https://github.com/mwalczak/dobre-mleko-be)
 | Path                       | What                                                                                                                                                        |
 | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `/`                        | Odkrywaj: search (with matching tags to filter by), sort and filter places (filters live in the URL)                                                        |
-| `/map`                     | Every place in view as a category-shaped marker                                                                                                             |
+| `/map`                     | Every place in view as a category-shaped marker; the "Chcę odwiedzić" layer (remembered) adds everyone's not yet visited wishlist items as yellow rings     |
 | `/places/:id`              | A place: photos, scores per criterion, gold star, save, navigate, comments                                                                                  |
-| `/places/:id/rate`         | Rate with the four criteria and at least one photo                                                                                                          |
+| `/places/:id/rate`         | Rate with the four criteria and at least one photo; optional visit date ("Kiedy byłeś?", seen only by the author)                                           |
 | `/add`, `/places/:id/edit` | Add or edit a place: paste a Google Maps link, or find it by name or address (or click the map, drag the pin); tags with suggestions; card style            |
-| `/stats`, `/me`            | Network and personal stats; profile, avatar, saved places, my ratings                                                                                       |
+| `/stats`, `/me`            | Network and personal stats; profile, avatar, saved places, my ratings, the "Chcę odwiedzić" tile                                                            |
+| `/me/wishlist`             | Chcę odwiedzić (S55): my list, to visit and visited, "+" adds                                                                                               |
+| `/members/:id/wishlist`    | Another member's list (linked from wishlist items and place authors; the web has no member profile yet)                                                     |
+| `/wishlist/new`, `…/edit`  | Add or edit a wishlist item (S32): name, point and address, description, link (a Google Maps link fills name and point)                                     |
+| `/wishlist/:id`            | A wishlist item (S23): map, description, link; the owner marks it visited, adds it as a place (`/add?wishlist=:id`), edits or removes it                    |
 | `/admin/`                  | Admin dashboard: the whitelist (Ludzie), places (Miejsca), push notifications (Powiadomienia), categories (Kategorie), icons (Ikony), settings (Ustawienia) |
 
 Signed-out visitors see the manifest and the sign-in; first sign-in asks for a profile. The dashboard is only for

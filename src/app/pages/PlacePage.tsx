@@ -1,14 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { api, unwrap, type Comment, type PlaceDetail } from '../../shared/api';
+import { api, unwrap, type Comment, type PlaceDetail, type Profile } from '../../shared/api';
 import { cardColor, textOn } from '../../shared/cardStyle';
 import { categoryInfo, CRITERIA, STATUS_LABEL } from '../../shared/categories';
 import { Avatar } from '../../shared/components/Avatar';
 import { CategoryMark } from '../../shared/components/CategoryMark';
 import { PhotoImage } from '../../shared/components/PhotoImage';
 import { useToast } from '../../shared/components/Toast';
-import { ago, count, date, distance, PRICE, rating } from '../../shared/format';
+import { ago, count, date, day, distance, PRICE, rating } from '../../shared/format';
 import { useMe } from '../../shared/session';
 import { ColumnBars, CriteriaBars } from '../components/Bars';
 import { useGeo } from '../geo';
@@ -110,6 +110,7 @@ function Place({ p }: { p: PlaceDetail }) {
         <Link to={`/places/${p.id}/rate`} className="btn btn-primary">
           {p.my_scores ? 'Zmień ocenę' : 'Oceń'}
         </Link>
+        {p.my_scores && p.my_visited_on && <span className="label place-visited">Byłem/am {day(p.my_visited_on)}</span>}
         <button
           type="button"
           className="btn btn-gold"
@@ -146,7 +147,7 @@ function Place({ p }: { p: PlaceDetail }) {
           <h2 className="label">Dlaczego warto</h2>
           <p className="place-description">{p.description}</p>
           <p className="label">
-            — {p.author.display_name}, dodał(a) {date(p.created_at)}
+            — <MemberLink member={p.author} />, dodał(a) {date(p.created_at)}
           </p>
         </section>
       )}
@@ -352,5 +353,15 @@ function CommentItem({ c, refresh }: { c: Comment; refresh: () => Promise<unknow
         )}
       </div>
     </li>
+  );
+}
+
+/** A member's name, linking to their "Chcę odwiedzić" list (the web has no member profile yet). */
+function MemberLink({ member }: { member: Profile }) {
+  if (member.status === 'deleted') return <>{member.display_name}</>;
+  return (
+    <Link to={`/members/${member.id}/wishlist`} state={{ name: member.display_name }} title="Lista „Chcę odwiedzić”">
+      {member.display_name}
+    </Link>
   );
 }

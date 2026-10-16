@@ -15,6 +15,7 @@ import { PlacePage } from './pages/PlacePage';
 import { PrivacyPage } from './pages/PrivacyPage';
 import { RatePage } from './pages/RatePage';
 import { StatsPage } from './pages/StatsPage';
+import { WishlistPage } from './pages/WishlistPage';
 
 const router = createBrowserRouter([
   // Public, without signing in (linked from the App Store).
@@ -34,6 +35,20 @@ const router = createBrowserRouter([
       },
       { path: '/stats', element: <StatsPage /> },
       { path: '/me', element: <MePage /> },
+      { path: '/me/wishlist', element: <WishlistPage /> },
+      { path: '/members/:id/wishlist', element: <WishlistPage /> },
+      {
+        path: '/wishlist/new',
+        lazy: () => import('./pages/WishlistFormPage').then((m) => ({ Component: m.AddWishlistPage })),
+      },
+      {
+        path: '/wishlist/:id',
+        lazy: () => import('./pages/WishlistItemPage').then((m) => ({ Component: m.WishlistItemPage })),
+      },
+      {
+        path: '/wishlist/:id/edit',
+        lazy: () => import('./pages/WishlistFormPage').then((m) => ({ Component: m.EditWishlistPage })),
+      },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

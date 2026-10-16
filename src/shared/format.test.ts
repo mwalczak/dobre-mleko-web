@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ago, count, distance, plural, rating } from './format';
+import { ago, count, day, distance, plural, rating, today } from './format';
 
 describe('format', () => {
   it('shows ratings with one decimal and a Polish comma', () => {
@@ -36,5 +36,14 @@ describe('format', () => {
     expect(ago('2026-10-11T08:00:00Z', now)).toBe('wczoraj');
     expect(ago('2026-10-07T12:00:00Z', now)).toBe('5 dni temu');
     expect(ago('2026-09-21T12:00:00Z', now)).toBe('3 tyg. temu');
+  });
+
+  it('shows a calendar day with an upper-case month', () => {
+    expect(day('2026-10-12')).toBe('12 PAŹ 2026');
+    expect(day('2026-01-01')).toBe('1 STY 2026');
+  });
+
+  it('gives today as YYYY-MM-DD in local time', () => {
+    expect(today(new Date(2026, 0, 5, 23, 30))).toBe('2026-01-05');
   });
 });

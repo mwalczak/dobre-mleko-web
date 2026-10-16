@@ -28,6 +28,21 @@ export const date = (iso: string) => new Intl.DateTimeFormat(pl, { dateStyle: 'm
 export const dateTime = (iso: string) =>
   new Intl.DateTimeFormat(pl, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso));
 
+/** A calendar day ('YYYY-MM-DD', no time zone) → "12 PAŹ 2026", like the apps' `meta` style. */
+export function day(isoDate: string): string {
+  const [y, m, d] = isoDate.split('-').map(Number);
+  return new Intl.DateTimeFormat(pl, { day: 'numeric', month: 'short', year: 'numeric' })
+    .format(new Date(y!, m! - 1, d!))
+    .replace('.', '')
+    .toUpperCase();
+}
+
+/** Today here, as 'YYYY-MM-DD' (the latest a visit can be). */
+export function today(now = new Date()): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}
+
 /** "dziś", "wczoraj", "3 dni temu", "2 tyg. temu", else the date. */
 export function ago(iso: string, now = new Date()): string {
   const days = Math.floor((now.getTime() - new Date(iso).getTime()) / 86_400_000);

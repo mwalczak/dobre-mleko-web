@@ -5,6 +5,12 @@ export type Coords = { lat: number; lng: number };
 /** Rybnik (Rynek), where the map starts when the browser location is unknown. */
 export const DEFAULT_CENTER: Coords = { lat: 50.0955, lng: 18.5419 };
 
+/** Six decimals (~10 cm): what we store for a pin. */
+export const roundCoords = (c: Coords): Coords => ({
+  lat: Math.round(c.lat * 1e6) / 1e6,
+  lng: Math.round(c.lng * 1e6) / 1e6,
+});
+
 let cached: Coords | null = null;
 
 /**

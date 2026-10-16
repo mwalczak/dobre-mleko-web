@@ -141,10 +141,12 @@ test('rate a place with a photo', async ({ page }) => {
     .locator('input[type=file]')
     .setInputFiles({ name: 'p.jpg', mimeType: 'image/jpeg', buffer: await jpeg(page) });
   await expect(page.locator('.photo-picker-item img')).toHaveCount(1);
+  await page.getByLabel('Kiedy byłeś?').fill('2026-10-12');
   await page.getByRole('button', { name: 'Zapisz ocenę' }).click();
 
   await expect(page.locator('.place-name')).toHaveText(name!);
   await expect(page.getByRole('link', { name: 'Zmień ocenę' })).toBeVisible();
+  await expect(page.getByText('Byłem/am 12 PAŹ 2026')).toBeVisible();
 });
 
 test('add a place with rating, photo and map pin', async ({ page }) => {
@@ -308,6 +310,81 @@ test('the map shows places', async ({ page }) => {
   await expect(page.locator('.map-marker').first()).toBeVisible({ timeout: 15_000 });
   await page.locator('.map-marker').first().click();
   await expect(page.locator('.map-card .place-card')).toBeVisible();
+});
+
+test('wishlist: add a place to visit, mark it visited, then add it as a place', async ({ page }) => {
+  const name = `Wymarzone miejsce ${Date.now()}`;
+  await signIn(page, 'ola@example.com', '/me');
+  await page.getByRole('link', { name: 'Dodaj do listy „Chcę odwiedzić”' }).click();
+  await expect(page.getByRole('heading', { name: 'Chcę odwiedzić' })).toBeVisible();
+  await page.getByLabel('Nazwa').fill(name);
+  await page.getByLabel('Szukaj miejsca lub adresu').fill('relaks');
+  await page.getByRole('option', { name: /Kawiarnia Relaks/ }).click();
+  await expect(page.getByLabel('Adres', { exact: true })).toHaveValue('Złota 8, Warszawa');
+  await expect(page.getByLabel('Nazwa')).toHaveValue(name); // a name we typed stays
+  await page.getByLabel('Opis').fill('Podobno najlepsza szarlotka.');
+  await page.getByLabel('Link').fill('https://example.com/relaks');
+  await page.getByRole('button', { name: 'Zapisz', exact: true }).click();
+
+  // S23: the item, mine.
+  await expect(page.locator('.place-name')).toHaveText(name);
+  await expect(page.getByText('Podobno najlepsza szarlotka.')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Link', exact: true })).toHaveAttribute(
+    'href',
+    'https://example.com/relaks',
+  );
+  await page.getByRole('button', { name: 'Odwiedzone', exact: true }).click();
+  await page.getByLabel('Kiedy byłeś?').fill('2026-10-12');
+  await page.getByRole('button', { name: 'Zapisz', exact: true }).click();
+  await expect(page.locator('.wish-visited')).toHaveText('Odwiedzone 12 PAŹ 2026');
+
+  // My list: in the visited section.
+  await page.goto('/me/wishlist');
+  await expect(page.getByRole('heading', { name: /Odwiedzone/ })).toBeVisible();
+  await page.getByRole('link', { name: new RegExp(name) }).click();
+
+  // "Dodaj jako miejsce": the add form starts with the item.
+  await page.getByRole('link', { name: 'Dodaj jako miejsce' }).click();
+  await expect(page.getByLabel('Nazwa')).toHaveValue(name);
+  await expect(page.getByLabel('Adres', { exact: true })).toHaveValue('Złota 8, Warszawa');
+  await expect(page.getByLabel('Kiedy byłeś?')).toHaveValue('2026-10-12');
+  await expect(page.getByText('52.23030, 21.00710')).toBeVisible();
+
+  // Back on the item: not visited after all, then removed.
+  await page.goBack();
+  await page.getByRole('button', { name: 'Nie odwiedzone' }).click();
+  await expect(page.getByRole('button', { name: 'Odwiedzone', exact: true })).toBeVisible();
+  page.once('dialog', (d) => d.accept());
+  await page.getByRole('button', { name: 'Usuń' }).click();
+  await expect(page).toHaveURL(/\/me\/wishlist$/);
+  await expect(page.getByText(name)).toHaveCount(0);
+});
+
+test('wishlist: a Google Maps link fills the form', async ({ page }) => {
+  const link =
+    'https://www.google.com/maps/place/Kawiarnia+Relaks/@52.2303,21.0071,17z/data=!3m1!4b1!4m6!3m5!1s0x1:0x2!8m2!3d52.2303!4d21.0071?entry=ttu';
+  await signIn(page, 'ola@example.com', '/wishlist/new');
+  await page.getByLabel('Link').fill(link);
+  await page.getByRole('button', { name: 'Wczytaj' }).click();
+  await expect(page.getByText(/Uzupełniono: nazwę, miejsce na mapie, adres/)).toBeVisible();
+  await expect(page.getByLabel('Nazwa')).toHaveValue('Kawiarnia Relaks');
+  await expect(page.getByLabel('Adres', { exact: true })).toHaveValue('Złota 8, Warszawa');
+  await expect(page.getByText('52.23030, 21.00710')).toBeVisible();
+});
+
+test('the map shows the wishlist layer', async ({ page }) => {
+  await signIn(page, 'kuba@example.com', '/map');
+  const layer = page.getByRole('button', { name: /Chcę odwiedzić/ });
+  await layer.click();
+  await expect(layer).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('.map-marker-wish').first()).toBeVisible({ timeout: 15_000 });
+  await page.locator('.map-marker-wish').first().click();
+  await expect(page).toHaveURL(/\/wishlist\/[0-9a-f-]+$/);
+  await expect(page.getByText(/Lista: |Twoja lista/)).toBeVisible();
+
+  // Remembered.
+  await page.goto('/map');
+  await expect(page.getByRole('button', { name: /Chcę odwiedzić/ })).toHaveAttribute('aria-pressed', 'true');
 });
 
 test('admin dashboard', async ({ page }) => {

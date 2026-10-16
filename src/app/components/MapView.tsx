@@ -5,6 +5,7 @@ import { useEffect, useRef } from 'react';
 import type { Category } from '../../shared/api';
 import { shapeMarkup } from '../../shared/categories';
 import type { Coords } from '../geo';
+import { WISH_RING } from '../wishlist';
 
 // MapLibre finds its worker next to its own module, which is not where the bundle puts it: ship it as an asset.
 maplibregl.setWorkerUrl(workerUrl);
@@ -25,15 +26,19 @@ const loadStyle = () =>
     .then((r) => (r.ok ? STYLE_URL : FALLBACK_STYLE))
     .catch(() => FALLBACK_STYLE));
 
-export type MapMarker = { id: string; lat: number; lng: number; category: Category; label: string };
+/** A place (its category's mark) or a wishlist item (`wish`: the yellow ring). */
+export type MapMarker = { id: string; lat: number; lng: number; label: string } & (
+  | { category: Category; wish?: false }
+  | { wish: true }
+);
 export type Bbox = { minLng: number; minLat: number; maxLng: number; maxLat: number };
 
 function markerElement(m: MapMarker, selected: boolean, onClick: (id: string) => void): HTMLElement {
   const el = document.createElement('button');
   el.type = 'button';
-  el.className = `map-marker${selected ? ' selected' : ''}`;
+  el.className = `map-marker${m.wish ? ' map-marker-wish' : ''}${selected ? ' selected' : ''}`;
   el.setAttribute('aria-label', m.label);
-  el.innerHTML = `<svg viewBox="0 0 44 44" width="100%" height="100%" aria-hidden="true">${shapeMarkup(m.category)}</svg>`;
+  el.innerHTML = `<svg viewBox="0 0 44 44" width="100%" height="100%" aria-hidden="true">${m.wish ? WISH_RING : shapeMarkup(m.category)}</svg>`;
   el.addEventListener('click', (e) => {
     e.stopPropagation();
     onClick(m.id);
@@ -42,7 +47,7 @@ function markerElement(m: MapMarker, selected: boolean, onClick: (id: string) =>
 }
 
 /**
- * A MapLibre map with category-shaped markers. Reports the visible area on every move, and clicks on empty map
+ * A MapLibre map with category-shaped markers (and yellow rings for wishlist items). Reports the visible area on every move, and clicks on empty map
  * (for picking a location).
  */
 export function MapView({

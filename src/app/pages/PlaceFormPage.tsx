@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useRef, useState, type Dispatch, type SetStateAction } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useState, type Dispatch, type SetStateAction } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { api, unwrap, type CardStyle, type Category, type PlaceDetail } from '../../shared/api';
 import { DEFAULT_CARD_STYLE } from '../../shared/cardStyle';
 import { categoryInfo, categoryChoices, STATUS_LABEL } from '../../shared/categories';
@@ -9,15 +9,17 @@ import { useToast } from '../../shared/components/Toast';
 import { PRICE } from '../../shared/format';
 import { useMeta } from '../../shared/session';
 import { CardStyleFields } from '../components/CardStyleFields';
-import { MapsLinkImport, type ResolvedLink } from '../components/MapsLinkImport';
-import { MapView } from '../components/MapView';
+import { LocationFieldset, usePinAddress } from '../components/LocationPicker';
+import { MapsLinkImport } from '../components/MapsLinkImport';
 import { PhotoPicker, type Uploaded } from '../components/PhotoPicker';
 import { EMPTY_SCORES, RatingInput, scoresComplete, type ScoresDraft } from '../components/RatingInput';
-import { PlaceSearch } from '../components/PlaceSearch';
 import { TagInput } from '../components/TagInput';
-import { reverseGeocode, type GeoResult } from '../geocode';
+import { VisitDateField } from '../components/VisitDateField';
+import { WishRing } from '../components/WishRing';
+import type { GeoResult } from '../geocode';
 import { useGeo, DEFAULT_CENTER, type Coords } from '../geo';
-import { findInOsm } from '../mapsLink';
+import { isGoogleMapsLink, locateLink, type ResolvedLink } from '../mapsLink';
+import { useWishlistItem, WISHLIST } from '../wishlist';
 import { usePlace } from './PlacePage';
 
 type Draft = {
@@ -59,7 +61,11 @@ const EMPTY: Draft = {
   mapsUrl: null,
 };
 
-/** Adding a place needs the author's rating and at least one photo, sent together (POST /places). */
+/**
+ * Adding a place needs the author's rating and at least one photo, sent together (POST /places). From a visited
+ * wishlist item (`?wishlist=<id>`, "Dodaj jako miejsce") the form starts with its name, point, address, Google Maps
+ * link and visit date, and the item is linked to the new place.
+ */
 export function AddPlacePage() {
   const meta = useMeta().data;
   const toast = useToast();
@@ -69,6 +75,23 @@ export function AddPlacePage() {
   const [scores, setScores] = useState<ScoresDraft>(EMPTY_SCORES);
   const [photos, setPhotos] = useState<Uploaded[]>([]);
   const [goldStar, setGoldStar] = useState(false);
+  const [visitedOn, setVisitedOn] = useState('');
+
+  const wishId = useSearchParams()[0].get('wishlist') ?? '';
+  const wish = useWishlistItem(wishId);
+  const fromWish = wish.data?.is_mine ? wish.data : null;
+  const [prefilled, setPrefilled] = useState<string | null>(null);
+  if (fromWish && prefilled !== fromWish.id) {
+    setPrefilled(fromWish.id);
+    setDraft((d) => ({
+      ...d,
+      name: fromWish.name,
+      location: { lat: fromWish.lat, lng: fromWish.lng },
+      address: fromWish.address ?? '',
+      mapsUrl: isGoogleMapsLink(fromWish.url) ? fromWish.url!.trim() : d.mapsUrl,
+    }));
+    setVisitedOn(fromWish.visited_on ?? '');
+  }
   const ready = draft.name.trim() && draft.category && draft.location && scoresComplete(scores) && photos.length > 0;
 
   const create = useMutation({
@@ -84,7 +107,13 @@ export function AddPlacePage() {
             price_level: draft.price,
             tags: draft.tags,
             google_maps_url: draft.mapsUrl,
-            rating: { vibe: scores.vibe!, offer: scores.offer!, service: scores.service, value: scores.value },
+            rating: {
+              vibe: scores.vibe!,
+              offer: scores.offer!,
+              service: scores.service,
+              value: scores.value,
+              visited_on: visitedOn || null,
+            },
             photo_ids: photos.map((x) => x.id),
             gold_star: goldStar,
             card_style: draft.style,
@@ -93,6 +122,13 @@ export function AddPlacePage() {
       ),
     onSuccess: async (p) => {
       toast.ok('Dodano miejsce.');
+      if (fromWish) {
+        // The wishlist item now points at the place ("Zobacz miejsce"); the place is added even if this fails.
+        await unwrap(
+          api.PATCH('/me/wishlist/{id}', { params: { path: { id: fromWish.id } }, body: { place_id: p.id } }),
+        ).catch(toast.fail);
+        await client.invalidateQueries({ queryKey: WISHLIST });
+      }
       await client.invalidateQueries({ queryKey: ['places'] });
       navigate(`/places/${p.id}`);
     },
@@ -110,11 +146,17 @@ export function AddPlacePage() {
       <header className="page-head">
         <h1 className="display">Dodaj miejsce</h1>
         <p className="muted">Tylko dobre miejsca: dodajesz je razem ze swoją oceną i zdjęciem.</p>
+        {fromWish && (
+          <p className="label wish-from">
+            <WishRing size={14} /> Z listy „Chcę odwiedzić”: {fromWish.name}
+          </p>
+        )}
       </header>
       <PlaceFields draft={draft} onChange={setDraft} />
       <section className="place-section">
         <h2 className="title">Twoja ocena</h2>
         <RatingInput value={scores} onChange={setScores} />
+        <VisitDateField value={visitedOn} onChange={setVisitedOn} />
       </section>
       <section className="place-section">
         <h2 className="label">Zdjęcia</h2>
@@ -261,29 +303,15 @@ function EditPlace({ p }: { p: PlaceDetail }) {
   );
 }
 
-const roundCoords = (c: Coords): Coords => ({ lat: Math.round(c.lat * 1e6) / 1e6, lng: Math.round(c.lng * 1e6) / 1e6 });
-
 function PlaceFields({ draft, onChange }: { draft: Draft; onChange: Dispatch<SetStateAction<Draft>> }) {
   const geo = useGeo();
   const set = (patch: Partial<Draft>) => onChange((d) => ({ ...d, ...patch }));
-  // The address we filled in ourselves: replaced when the pin moves, unlike one the author typed.
-  const autoAddress = useRef<string | null>(null);
-  const lookup = useRef<AbortController | null>(null);
-
-  const currentAddress = useRef(draft.address);
-  currentAddress.current = draft.address;
-
-  const fillAddress = (address: string | null) => {
-    const current = currentAddress.current;
-    if (!address || (current.trim() && current !== autoAddress.current)) return;
-    autoAddress.current = address;
-    set({ address });
-  };
+  const pin = usePinAddress(draft.address, set);
 
   /** A search result: pin, address, and the name and category when they are still empty. */
   const pick = (r: GeoResult) => {
-    lookup.current?.abort();
-    fillAddress(r.address);
+    pin.cancel();
+    pin.fillAddress(r.address);
     onChange((d) => ({
       ...d,
       location: r.location,
@@ -298,25 +326,16 @@ function PlaceFields({ draft, onChange }: { draft: Draft; onChange: Dispatch<Set
    * address and category (or the address at the pin). Says what it filled.
    */
   const fromLink = async (link: ResolvedLink): Promise<string[]> => {
-    lookup.current?.abort();
+    pin.cancel();
     const filled: string[] = [];
     const name = draft.name.trim() || link.name || '';
-    const at = link.location ? roundCoords(link.location) : null;
-    let osm: GeoResult | null = null;
-    if (link.name) {
-      osm = await findInOsm(link.name, at ?? draft.location ?? geo.coords ?? DEFAULT_CENTER, !!at).catch(() => null);
-    }
-    const where = at && link.location?.precise ? at : (osm?.location ?? at);
-    const address = osm?.address ?? (where ? ((await reverseGeocode(where).catch(() => null))?.address ?? null) : null);
+    const { location: where, address, osm } = await locateLink(link, draft.location ?? geo.coords ?? DEFAULT_CENTER);
     const category = osm?.category && categoryInfo(osm.category).active ? osm.category : null;
 
     if (!draft.name.trim() && link.name) filled.push('nazwę');
     if (where) filled.push('miejsce na mapie');
-    const addressBefore = currentAddress.current;
-    fillAddress(address);
-    if (address && address !== addressBefore && (!addressBefore.trim() || addressBefore === autoAddress.current)) {
-      filled.push('adres');
-    }
+    const addressBefore = draft.address;
+    if (pin.fillAddress(address) && address !== addressBefore) filled.push('adres');
     if (!draft.category && category) filled.push('kategorię');
     onChange((d) => ({
       ...d,
@@ -328,15 +347,6 @@ function PlaceFields({ draft, onChange }: { draft: Draft; onChange: Dispatch<Set
     return filled;
   };
 
-  /** A pin set by hand: look up its address. */
-  const pinAt = (c: Coords) => {
-    set({ location: roundCoords(c) });
-    lookup.current?.abort();
-    const ctrl = (lookup.current = new AbortController());
-    reverseGeocode(c, ctrl.signal)
-      .then((r) => fillAddress(r?.address ?? null))
-      .catch(() => {}); // the address stays as it is
-  };
   return (
     <>
       <MapsLinkImport onResolved={fromLink} />
@@ -368,33 +378,7 @@ function PlaceFields({ draft, onChange }: { draft: Draft; onChange: Dispatch<Set
         </div>
       </fieldset>
 
-      <fieldset className="field">
-        <legend className="label">Miejsce na mapie</legend>
-        <PlaceSearch near={draft.location ?? geo.coords ?? DEFAULT_CENTER} onPick={pick} />
-        <p className="data muted">Albo kliknij mapę, żeby postawić pinezkę.</p>
-        <MapView
-          center={draft.location ?? geo.coords ?? DEFAULT_CENTER}
-          zoom={draft.location ? 17 : 13}
-          pin={draft.location}
-          onMapClick={pinAt}
-          onPinDrag={pinAt}
-          className="map-picker"
-        />
-        <div className="row">
-          <button
-            type="button"
-            className="btn btn-secondary btn-small"
-            onClick={() => (geo.coords ? pinAt(geo.coords) : geo.request())}
-          >
-            {geo.coords ? 'Tu, gdzie jestem' : geo.status === 'pending' ? 'Szukam…' : 'Użyj mojej lokalizacji'}
-          </button>
-          {draft.location && (
-            <span className="data muted">
-              {draft.location.lat.toFixed(5)}, {draft.location.lng.toFixed(5)}
-            </span>
-          )}
-        </div>
-      </fieldset>
+      <LocationFieldset location={draft.location} onPick={pick} onPin={pin.pinAt} />
 
       <div className="field">
         <label htmlFor="place-address">Adres</label>
@@ -403,10 +387,7 @@ function PlaceFields({ draft, onChange }: { draft: Draft; onChange: Dispatch<Set
           maxLength={200}
           placeholder="ul. Nowy Świat 22"
           value={draft.address}
-          onChange={(e) => {
-            autoAddress.current = null;
-            set({ address: e.target.value });
-          }}
+          onChange={(e) => pin.typed(e.target.value)}
         />
       </div>
 

@@ -1,12 +1,9 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import type { Schemas } from '../../shared/api';
 import { categoryInfo } from '../../shared/categories';
 import { CategoryMark } from '../../shared/components/CategoryMark';
 import { errorMessage } from '../../shared/errors';
-import { resolveMapsLink } from '../mapsLink';
-
-export type ResolvedLink = Schemas['ResolvedMapsLink'];
+import { resolveMapsLink, type ResolvedLink } from '../mapsLink';
 
 /**
  * "Paste a Google Maps link": the API reads the place's name and position, `onResolved` fills the form and says

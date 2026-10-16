@@ -4,11 +4,13 @@ import { Link } from 'react-router-dom';
 import { api, unwrap, uploadImage, type Me } from '../../shared/api';
 import { Avatar } from '../../shared/components/Avatar';
 import { useToast } from '../../shared/components/Toast';
-import { rating } from '../../shared/format';
+import { day, rating } from '../../shared/format';
 import { preparePhoto } from '../../shared/image';
 import { signOut, useMe } from '../../shared/session';
 import { PlaceCard } from '../components/PlaceCard';
 import { ProfileForm } from '../components/ProfileForm';
+import { WishRing } from '../components/WishRing';
+import { useWishlistCount } from '../wishlist';
 
 export function MePage() {
   const me = useMe().data;
@@ -26,6 +28,7 @@ export function MePage() {
           </p>
         </div>
       </header>
+      <WishlistTile />
       <div className="tabs" role="tablist">
         {(
           [
@@ -49,6 +52,25 @@ export function MePage() {
       {tab === 'saved' && <Saved />}
       {tab === 'ratings' && <MyRatings />}
       {tab === 'profile' && <Profile me={me} />}
+    </div>
+  );
+}
+
+/** "Chcę odwiedzić": how many on my list are still to visit; "+" adds one. */
+function WishlistTile() {
+  const count = useWishlistCount();
+  return (
+    <div className="wish-tile panel">
+      <Link to="/me/wishlist" className="wish-tile-link">
+        <WishRing size={32} />
+        <span>
+          <span className="title">Chcę odwiedzić</span>
+          <span className="label">{count.data == null ? ' ' : `${count.data} do odwiedzenia`}</span>
+        </span>
+      </Link>
+      <Link to="/wishlist/new" className="btn btn-primary wish-tile-add" aria-label="Dodaj do listy „Chcę odwiedzić”">
+        +
+      </Link>
     </div>
   );
 }
@@ -114,7 +136,10 @@ function MyRatings() {
     <ul className="my-ratings panel">
       {ratings.data.items.map((r) => (
         <li key={r.place.id}>
-          <Link to={`/places/${r.place.id}`}>{r.place.name}</Link>
+          <span className="my-rating-name">
+            <Link to={`/places/${r.place.id}`}>{r.place.name}</Link>
+            {r.visited_on && <span className="label">Byłem/am {day(r.visited_on)}</span>}
+          </span>
           <span className="numeral small">{rating(r.overall)}</span>
         </li>
       ))}

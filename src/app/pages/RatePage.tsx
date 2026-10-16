@@ -8,6 +8,7 @@ import { useToast } from '../../shared/components/Toast';
 import { useMe, useMeta } from '../../shared/session';
 import { PhotoPicker, type Uploaded } from '../components/PhotoPicker';
 import { EMPTY_SCORES, RatingInput, scoresComplete, type ScoresDraft } from '../components/RatingInput';
+import { VisitDateField } from '../components/VisitDateField';
 import { usePlace } from './PlacePage';
 
 export function RatePage() {
@@ -26,6 +27,7 @@ function Rate({ p }: { p: PlaceDetail }) {
   const client = useQueryClient();
   const [scores, setScores] = useState<ScoresDraft>(p.my_scores ?? EMPTY_SCORES);
   const [photos, setPhotos] = useState<Uploaded[]>([]);
+  const [visitedOn, setVisitedOn] = useState(p.my_visited_on ?? '');
   const myPhotos = p.photos.filter((ph) => ph.uploaded_by === me?.id);
   const max = (meta?.max_photos_per_rating ?? 6) - myPhotos.length;
   const hasPhoto = myPhotos.length + photos.length > 0;
@@ -49,6 +51,7 @@ function Rate({ p }: { p: PlaceDetail }) {
             offer: scores.offer!,
             service: scores.service,
             value: scores.value,
+            visited_on: visitedOn || null,
             photo_ids: photos.map((x) => x.id),
           },
         }),
@@ -81,6 +84,7 @@ function Rate({ p }: { p: PlaceDetail }) {
       </header>
 
       <RatingInput value={scores} onChange={setScores} />
+      <VisitDateField value={visitedOn} onChange={setVisitedOn} />
 
       <section className="place-section">
         <h2 className="label">Zdjęcia</h2>

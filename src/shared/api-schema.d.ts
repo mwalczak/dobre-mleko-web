@@ -134,7 +134,7 @@ export interface paths {
     post?: never;
     /**
      * Delete my account
-     * @description Removes the personal data: e-mail, name, badge, avatar, Google/Apple ids, favourite categories, saved places, devices and the place on the access list. Places, ratings, photos and comments stay, shown as by "Były członek" (status `deleted`). Every session ends. Signing in again with the same e-mail starts a new account, once an admin puts it back on the list. ADMIN_EMAILS admins stay on the list.
+     * @description Removes the personal data: e-mail, name, badge, avatar, Google/Apple ids, favourite categories, saved places, the wishlist, devices and the place on the access list. Places, ratings, photos and comments stay, shown as by "Były członek" (status `deleted`). Every session ends. Signing in again with the same e-mail starts a new account, once an admin puts it back on the list. ADMIN_EMAILS admins stay on the list.
      */
     delete: operations['deleteMe'];
     options?: never;
@@ -324,7 +324,7 @@ export interface paths {
     get?: never;
     /**
      * Rate a place (or change my rating)
-     * @description Scores 1–5. `vibe` (klimat) and `offer` (oferta) are required; `service` (obsługa) and `value` (wartość) may be null or left out ("nie dotyczy"). Overall = average of the given scores. Every rating has at least one photo: upload with `POST /photos`, then pass `photo_ids` (added to the ones the rating already has; up to `max_photos_per_rating`).
+     * @description Scores 1–5. `vibe` (klimat) and `offer` (oferta) are required; `service` (obsługa) and `value` (wartość) may be null or left out ("nie dotyczy"). Overall = average of the given scores. `visited_on` (optional) is when I was there. Every rating has at least one photo: upload with `POST /photos`, then pass `photo_ids` (added to the ones the rating already has; up to `max_photos_per_rating`).
      */
     put: operations['putPlacesByIdRating'];
     post?: never;
@@ -360,6 +360,108 @@ export interface paths {
     options?: never;
     head?: never;
     patch?: never;
+    trace?: never;
+  };
+  '/me/wishlist': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * My wishlist
+     * @description Not yet visited first (newest first), then visited (most recent visit first).
+     */
+    get: operations['getMeWishlist'];
+    put?: never;
+    /**
+     * Add to my wishlist
+     * @description Name 1–120, description up to 1000, address up to 200 characters; `url` an http(s) link up to 500. A Google Maps link can be read with `POST /maps-links/resolve` first.
+     */
+    post: operations['postMeWishlist'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/members/{id}/wishlist': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * A member's wishlist
+     * @description Everyone in the network sees everyone's wishlist. 404 for an unknown or deleted member.
+     */
+    get: operations['getMembersByIdWishlist'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/wishlist': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Everyone's wishlist items in a map viewport
+     * @description For the map layer: items of all members inside `bbox`. Visited items are left out unless `visited` says otherwise. Up to `limit` (max 500) items.
+     */
+    get: operations['getWishlist'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/wishlist/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** A wishlist item */
+    get: operations['getWishlistById'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/me/wishlist/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Remove from my wishlist */
+    delete: operations['deleteMeWishlistById'];
+    options?: never;
+    head?: never;
+    /**
+     * Change my wishlist item
+     * @description Only the fields given change. `visited_on` marks it visited (a date, not in the future) or not (null); `place_id` links the regular place it was added as. 403 for someone else's item.
+     */
+    patch: operations['patchMeWishlistById'];
     trace?: never;
   };
   '/places/{id}/comments': {
@@ -1080,6 +1182,12 @@ export interface components {
         5: number;
       };
       my_scores: components['schemas']['Scores'] | null;
+      /**
+       * Format: date
+       * @description When I was there (with my rating); null if not given
+       * @example 2026-10-12
+       */
+      my_visited_on: string | null;
       /** @description Everyone who gave a gold star, newest first */
       gold_star_awarders: components['schemas']['Profile'][];
       /** @description My star this month */
@@ -1105,6 +1213,12 @@ export interface components {
         };
         scores: components['schemas']['Scores'];
         overall: number;
+        /**
+         * Format: date
+         * @description When I was there; null if not given
+         * @example 2026-10-12
+         */
+        visited_on: string | null;
         /** Format: date-time */
         updated_at: string;
       }[];
@@ -1428,6 +1542,41 @@ export interface components {
         category_id: string;
         distance_m: number;
       }[];
+    };
+    /** @description A place someone wants to visit — no category, ratings or photos */
+    WishlistItem: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+      lat: number;
+      lng: number;
+      address: string | null;
+      description: string | null;
+      /** @description A link with more (website, Google Maps, article) */
+      url: string | null;
+      /**
+       * Format: date
+       * @description Set once the owner has been there
+       * @example 2026-10-12
+       */
+      visited_on: string | null;
+      /**
+       * Format: uuid
+       * @description The regular place it was added as after the visit
+       */
+      place_id: string | null;
+      owner: components['schemas']['Profile'];
+      is_mine: boolean;
+      /** Format: date-time */
+      created_at: string;
+      /** Format: date-time */
+      updated_at: string | null;
+    };
+    WishlistItemList: {
+      items: components['schemas']['WishlistItem'][];
+      /** @description Pass as `cursor` for the next page; null at the end */
+      next_cursor: string | null;
+      total: number;
     };
   };
   responses: never;
@@ -2106,6 +2255,11 @@ export interface operations {
             service?: number | null;
             /** @default null */
             value?: number | null;
+            /**
+             * Format: date
+             * @description When I was there: YYYY-MM-DD, not in the future; null clears it, left out keeps it
+             */
+            visited_on?: string | null;
           };
           /** @description Photos uploaded with POST /photos; at least one (every rating has a photo) */
           photo_ids: string[];
@@ -2396,6 +2550,11 @@ export interface operations {
           /** @default null */
           value?: number | null;
           /**
+           * Format: date
+           * @description When I was there: YYYY-MM-DD, not in the future; null clears it, left out keeps it
+           */
+          visited_on?: string | null;
+          /**
            * @description Photos from POST /photos to add; required (min. 1) unless the rating already has photos
            * @default []
            */
@@ -2504,6 +2663,265 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['GoldStarResult'];
+        };
+      };
+      /** @description Error */
+      '4XX': {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+    };
+  };
+  getMeWishlist: {
+    parameters: {
+      query?: {
+        /** @description Only visited (`true`) or only not yet visited (`false`); both when left out */
+        visited?: 'true' | 'false';
+        limit?: number;
+        /** @description `next_cursor` from the previous page */
+        cursor?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WishlistItemList'];
+        };
+      };
+      /** @description Error */
+      '4XX': {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+    };
+  };
+  postMeWishlist: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': {
+          name: string;
+          lat: number;
+          lng: number;
+          address?: string | null;
+          description?: string | null;
+          url?: (string | null) | '';
+        };
+      };
+    };
+    responses: {
+      /** @description OK */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WishlistItem'];
+        };
+      };
+      /** @description Error */
+      '4XX': {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+    };
+  };
+  getMembersByIdWishlist: {
+    parameters: {
+      query?: {
+        /** @description Only visited (`true`) or only not yet visited (`false`); both when left out */
+        visited?: 'true' | 'false';
+        limit?: number;
+        /** @description `next_cursor` from the previous page */
+        cursor?: string;
+      };
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WishlistItemList'];
+        };
+      };
+      /** @description Error */
+      '4XX': {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+    };
+  };
+  getWishlist: {
+    parameters: {
+      query: {
+        /** @description Map viewport: minLng,minLat,maxLng,maxLat */
+        bbox: string;
+        /** @description Only visited (`true`) or only not yet visited (`false`); both when left out */
+        visited?: 'true' | 'false';
+        limit?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WishlistItemList'];
+        };
+      };
+      /** @description Error */
+      '4XX': {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+    };
+  };
+  getWishlistById: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WishlistItem'];
+        };
+      };
+      /** @description Error */
+      '4XX': {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+    };
+  };
+  deleteMeWishlistById: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Done, no content */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Error */
+      '4XX': {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+    };
+  };
+  patchMeWishlistById: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': {
+          name?: string;
+          lat?: number;
+          lng?: number;
+          address?: string | null;
+          description?: string | null;
+          url?: (string | null) | '';
+          /**
+           * Format: date
+           * @description YYYY-MM-DD, not later than today (Europe/Warsaw); null = not visited
+           */
+          visited_on?: string | null;
+          /**
+           * Format: uuid
+           * @description The regular place it was added as
+           */
+          place_id?: string | null;
+        };
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WishlistItem'];
         };
       };
       /** @description Error */
