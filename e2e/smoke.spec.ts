@@ -301,7 +301,7 @@ test('change a place card style', async ({ page }) => {
   await page.goto(`/?q=${encodeURIComponent(name)}`);
   const art = page.locator('.place-card').first().locator('[data-layout="b"]');
   await expect(art).toBeVisible();
-  await expect(art).toHaveCSS('background-color', 'rgb(23, 43, 77)');
+  await expect(art).toHaveCSS('background-color', 'rgb(28, 43, 79)');
 });
 
 test('the map shows places', async ({ page }) => {

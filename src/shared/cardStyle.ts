@@ -7,24 +7,24 @@ export type CardColor = NonNullable<CardStyle['color']>;
 export type CardLayout = Exclude<CardStyle['layout'], 'auto'>;
 export type PhotoFilter = CardStyle['photo_filter'];
 
-/** The 16 card colours (names are the API's; red, blue, yellow and ink are the design system's own). */
+/** The 16 card colours: the API's names, values from the apps' design tokens (design/tokens.json → cardColor). */
 export const CARD_COLORS: Record<CardColor, { label: string; hex: string }> = {
   red: { label: 'Czerwony', hex: '#D7301F' },
   blue: { label: 'Niebieski', hex: '#1D4FA0' },
   yellow: { label: 'Żółty', hex: '#F2B900' },
   ink: { label: 'Czarny', hex: '#141414' },
-  orange: { label: 'Pomarańczowy', hex: '#E8702A' },
-  pink: { label: 'Różowy', hex: '#E58FA6' },
-  green: { label: 'Zielony', hex: '#2E7D4F' },
-  teal: { label: 'Morski', hex: '#1E8A8A' },
-  sky: { label: 'Błękitny', hex: '#6FA8DC' },
-  navy: { label: 'Granatowy', hex: '#172B4D' },
-  violet: { label: 'Fioletowy', hex: '#6B4C9A' },
-  ochre: { label: 'Ochra', hex: '#C8902E' },
-  brick: { label: 'Ceglany', hex: '#9C3B2A' },
-  olive: { label: 'Oliwkowy', hex: '#6B6B2E' },
-  sand: { label: 'Piaskowy', hex: '#D9C9A3' },
-  stone: { label: 'Kamienny', hex: '#8D877D' },
+  orange: { label: 'Pomarańczowy', hex: '#EE7623' },
+  pink: { label: 'Różowy', hex: '#E9799E' },
+  green: { label: 'Zielony', hex: '#1E6B45' },
+  teal: { label: 'Morski', hex: '#0F6E7A' },
+  sky: { label: 'Błękitny', hex: '#7DB4E0' },
+  navy: { label: 'Granatowy', hex: '#1C2B4F' },
+  violet: { label: 'Fioletowy', hex: '#5A3A8C' },
+  ochre: { label: 'Ochra', hex: '#C99A2E' },
+  brick: { label: 'Ceglany', hex: '#8E2F1D' },
+  olive: { label: 'Oliwkowy', hex: '#5F6B23' },
+  sand: { label: 'Piaskowy', hex: '#DCCAA5' },
+  stone: { label: 'Kamienny', hex: '#8C877D' },
 };
 
 export const CARD_COLOR_IDS = Object.keys(CARD_COLORS) as CardColor[];
