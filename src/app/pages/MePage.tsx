@@ -172,6 +172,40 @@ function Profile({ me }: { me: Me }) {
           Wyloguj
         </button>
       </div>
+      <DeleteAccount />
     </div>
+  );
+}
+
+/** Deletes the account (DELETE /me), then signs out. Places, ratings and comments stay as "Były członek". */
+function DeleteAccount() {
+  const toast = useToast();
+  const remove = useMutation({
+    mutationFn: () => unwrap(api.DELETE('/me')),
+    onSuccess: signOut,
+    onError: toast.fail,
+  });
+  return (
+    <section className="delete-account" aria-labelledby="delete-account-title">
+      <h2 id="delete-account-title" className="label">
+        Usunięcie konta
+      </h2>
+      <p className="label">
+        Imię, e-mail i zdjęcie profilowe znikną od razu. Miejsca, oceny i komentarze zostaną jako „Były członek”.{' '}
+        <Link to="/usun-konto">Szczegóły</Link>
+      </p>
+      <button
+        type="button"
+        className="btn btn-danger"
+        disabled={remove.isPending}
+        onClick={() =>
+          confirm(
+            'Usunąć konto? Twoje imię, e-mail i zdjęcie profilowe zostaną usunięte, a miejsca, oceny i komentarze zostaną jako „Były członek”. Tego nie da się cofnąć.',
+          ) && remove.mutate()
+        }
+      >
+        Usuń konto
+      </button>
+    </section>
   );
 }

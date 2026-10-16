@@ -1,4 +1,4 @@
-import { NavLink, Outlet, ScrollRestoration } from 'react-router-dom';
+import { Link, NavLink, Outlet, ScrollRestoration } from 'react-router-dom';
 import { Avatar } from '../shared/components/Avatar';
 import { useCategories } from '../shared/categories';
 import { Brand } from '../shared/components/Brand';
@@ -83,6 +83,9 @@ function Welcome() {
       </h1>
       <p className="label">Wstęp tylko dla osób z listy</p>
       <SignIn />
+      <p className="label welcome-links">
+        <Link to="/privacy">Prywatność</Link> · <Link to="/usun-konto">Usuń konto</Link>
+      </p>
     </main>
   );
 }

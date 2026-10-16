@@ -1,15 +1,16 @@
+import { Link } from 'react-router-dom';
 import { Brand } from '../../shared/components/Brand';
 
-/** Polityka prywatności (publiczna, bez logowania) — adres podany w App Store Connect. */
+/** Polityka prywatności (publiczna, bez logowania) — adres podany w App Store Connect i Google Play. */
 export function PrivacyPage() {
   return (
     <div className="page narrow privacy">
       <Brand />
       <h1 className="display">Polityka prywatności</h1>
-      <p className="label">Obowiązuje od 13 października 2026</p>
+      <p className="label">Obowiązuje od 16 października 2026</p>
 
       <p>
-        Dobre Mleko to prywatna aplikacja do polecania miejsc w zamkniętej grupie przyjaciół (iOS i strona
+        Dobre Mleko to prywatna aplikacja do polecania miejsc w zamkniętej grupie przyjaciół (iOS, Android i strona
         dobre-mleko.app). Tu opisujemy, jakie dane przetwarzamy, po co i jakie masz prawa.
       </p>
 
@@ -22,23 +23,29 @@ export function PrivacyPage() {
       <h2 className="title">Jakie dane przetwarzamy</h2>
       <ul>
         <li>
-          <strong>Konto Google:</strong> adres e-mail, imię i zdjęcie profilowe — do logowania i sprawdzenia, czy jesteś
-          na liście zaproszonych osób.
+          <strong>Konto Google lub Apple:</strong> adres e-mail, imię i zdjęcie profilowe — do logowania i sprawdzenia,
+          czy jesteś na liście zaproszonych osób.
         </li>
         <li>
           <strong>Profil:</strong> wyświetlana nazwa, odznaka i ulubione kategorie — widzą je inni członkowie.
         </li>
         <li>
-          <strong>Twoje treści:</strong> dodane miejsca, oceny, zdjęcia, komentarze, Złote Gwiazdki i zapisane miejsca —
-          widzą je inni członkowie.
+          <strong>Twoje treści:</strong> dodane miejsca, oceny, zdjęcia, komentarze, Złote Gwiazdki, zapisane miejsca i
+          lista „Chcę odwiedzić” — widzą je inni członkowie.
         </li>
         <li>
-          <strong>Lokalizacja (opcjonalnie, za Twoją zgodą):</strong> przybliżona pozycja urządzenia, wysyłana z
-          zapytaniami, żeby pokazać odległości do miejsc i mapę wokół Ciebie. Nie zapisujemy jej i nie pokazujemy innym.
+          <strong>Lokalizacja (opcjonalnie, za Twoją zgodą):</strong> pozycja urządzenia — przybliżona albo dokładna,
+          zależnie od zgody wybranej w telefonie lub przeglądarce. Wysyłamy ją z zapytaniami, żeby pokazać odległości do
+          miejsc, mapę wokół Ciebie i podpowiedzi adresów w pobliżu. Nie zapisujemy jej i nie pokazujemy innym.
         </li>
         <li>
           <strong>Powiadomienia (opcjonalnie, za Twoją zgodą):</strong> identyfikator urządzenia do powiadomień push i
           Twoje ustawienia powiadomień.
+        </li>
+        <li>
+          <strong>Wyszukiwanie adresów:</strong> gdy dodajesz miejsce, wpisany tekst i fragment mapy, który oglądasz,
+          trafiają do wyszukiwarki adresów (patrz niżej). Jeśli wkleisz link z Google Maps, nasz serwer odczytuje z
+          niego nazwę i współrzędne miejsca; link zapisujemy przy miejscu.
         </li>
         <li>
           <strong>Dane techniczne:</strong> logi serwera (np. adres IP, czas zapytania) potrzebne do działania i
@@ -55,14 +62,20 @@ export function PrivacyPage() {
       <h2 className="title">Komu przekazujemy dane</h2>
       <ul>
         <li>
-          <strong>Google</strong> — logowanie kontem Google.
+          <strong>Google</strong> — logowanie kontem Google; powiadomienia push na Androidzie (Firebase Cloud
+          Messaging); odczytanie wklejonego linku z Google Maps.
         </li>
         <li>
-          <strong>Apple</strong> — dostarczanie powiadomień push (Apple Push Notification service).
+          <strong>Apple</strong> — logowanie przez Apple; powiadomienia push na iPhonie (Apple Push Notification
+          service); wyszukiwanie adresów na iPhonie (Apple Maps).
         </li>
         <li>
           <strong>Dostawcy map</strong> (OpenFreeMap / OpenStreetMap) — pobieranie kafelków mapy; widzą adres IP
           urządzenia, nie Twoje dane konta.
+        </li>
+        <li>
+          <strong>Wyszukiwarki adresów OpenStreetMap</strong> (Photon, Nominatim) — na Androidzie i w przeglądarce:
+          wpisany tekst, przybliżony obszar mapy i adres IP urządzenia, bez danych konta.
         </li>
         <li>
           <strong>Hosting</strong> — serwer, na którym działa usługa i przechowywane są dane oraz zdjęcia.
@@ -79,8 +92,15 @@ export function PrivacyPage() {
       <p>
         Masz prawo do dostępu do danych, ich sprostowania, usunięcia, ograniczenia przetwarzania, przeniesienia oraz
         sprzeciwu, a także do wniesienia skargi do Prezesa Urzędu Ochrony Danych Osobowych. Kopię swoich danych
-        wyeksportujesz w ustawieniach aplikacji; w pozostałych sprawach — w tym usunięcia konta — napisz na adres
-        powyżej. Zgody na lokalizację i powiadomienia zmienisz w ustawieniach telefonu.
+        wyeksportujesz w ustawieniach aplikacji; w pozostałych sprawach napisz na adres powyżej. Zgody na lokalizację i
+        powiadomienia zmienisz w ustawieniach telefonu.
+      </p>
+
+      <h2 className="title">Usunięcie konta</h2>
+      <p>
+        Konto usuniesz sam w aplikacji (Ja → Ustawienia → Usuń konto) albo na stronie (Ja → Profil → Usuń konto) — od
+        razu i bez pytania nas o zgodę. Możesz też poprosić o to mailem. Szczegóły:{' '}
+        <Link to="/usun-konto">dobre-mleko.app/usun-konto</Link>.
       </p>
 
       <h2 className="title">Dzieci</h2>

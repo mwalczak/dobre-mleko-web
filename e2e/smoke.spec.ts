@@ -91,6 +91,32 @@ test('signed out: the manifest and sign-in', async ({ page }) => {
   await expect(page.getByText('Logowanie deweloperskie')).toBeVisible();
 });
 
+test('signed out: privacy policy and account deletion pages', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Usuń konto' }).click();
+  await expect(page.getByRole('heading', { name: 'Usuń konto', level: 1 })).toBeVisible();
+  await expect(page.getByText('Ja → Ustawienia')).toBeVisible();
+  await page.getByRole('link', { name: 'polityka prywatności' }).click();
+  await expect(page.getByRole('heading', { name: 'Polityka prywatności' })).toBeVisible();
+  await expect(page.getByText('Firebase Cloud')).toBeVisible();
+});
+
+test('delete my account', async ({ page }) => {
+  // The API tests the deletion itself; here it is answered, so the shared fixtures stay intact.
+  let deleted = false;
+  await page.route('**/api/me', (route) => {
+    if (route.request().method() !== 'DELETE') return route.fallback();
+    deleted = true;
+    return route.fulfill({ status: 204 });
+  });
+  await signIn(page, 'zosia@example.com', '/me');
+  await page.getByRole('tab', { name: 'Profil' }).click();
+  page.once('dialog', (d) => d.accept());
+  await page.getByRole('button', { name: 'Usuń konto' }).click();
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Tylko');
+  expect(deleted).toBe(true);
+});
+
 test('discover, search, a place, stats and profile', async ({ page }) => {
   await signIn(page, 'kuba@example.com');
   await expect(page.getByRole('heading', { name: 'Odkrywaj' })).toBeVisible();
