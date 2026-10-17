@@ -475,3 +475,53 @@ test('members cannot use the dashboard', async ({ page }) => {
   await signIn(page, 'kuba@example.com', '/admin/');
   await expect(page.getByRole('heading', { name: 'Brak dostępu' })).toBeVisible();
 });
+
+test('report a bug after checking what is already reported', async ({ page }) => {
+  // The API tests the PMO calls; here /api/reports is answered, so no issue tracker is needed.
+  const reported = {
+    key: 'DM-1',
+    type: 'bug',
+    status: 'accepted',
+    priority: 'P2',
+    title: 'Mapa nie ładuje się na iPhonie',
+    description: 'Biały ekran',
+    private: false,
+    duplicate_of: null,
+    created_at: '2026-10-17T12:00:00Z',
+    updated_at: '2026-10-17T12:00:00Z',
+  };
+  let sent: Record<string, unknown> | null = null;
+  await page.route('**/api/reports**', (route) => {
+    if (route.request().method() === 'POST') {
+      sent = route.request().postDataJSON();
+      return route.fulfill({ status: 201, json: { ...reported, ...sent, key: 'DM-2', status: 'reported' } });
+    }
+    return route.fulfill({ json: { items: [reported], next_offset: null } });
+  });
+
+  await signIn(page, 'ola@example.com', '/me');
+  await page.getByRole('tab', { name: 'Profil' }).click();
+  await page.getByRole('link', { name: 'Zgłoś problem' }).click();
+  await expect(page).toHaveURL(/\/report$/);
+  await expect(page.getByRole('heading', { name: 'Coś nie gra?' })).toBeVisible();
+  await expect(page.locator('.report-all .report-row')).toContainText('Przyjęte');
+
+  await page.getByLabel('W skrócie').fill('mapa nie laduje');
+  await expect(page.getByText('Może to już jest zgłoszone?')).toBeVisible();
+  await page.getByLabel('W skrócie').fill('Zdjęcia ładują się wolno');
+  await page.getByLabel('Szczegóły').fill('Na LTE kilka sekund na zdjęcie.');
+  await page.getByRole('button', { name: 'Wyślij zgłoszenie' }).click();
+  await expect(page.getByRole('heading', { name: 'Dzięki, mamy to.' })).toBeVisible();
+  expect(sent).toEqual({
+    type: 'bug',
+    title: 'Zdjęcia ładują się wolno',
+    description: 'Na LTE kilka sekund na zdjęcie.',
+  });
+
+  // Abuse reports are private: no similar reports, and a note says so.
+  await page.getByRole('button', { name: 'Zgłoś coś jeszcze' }).click();
+  await page.getByRole('button', { name: 'Nadużycie' }).click();
+  await page.getByLabel('W skrócie').fill('mapa nie laduje');
+  await expect(page.getByText('Zgłoszenie nadużycia jest prywatne')).toBeVisible();
+  await expect(page.getByText('Może to już jest zgłoszone?')).toBeHidden();
+});

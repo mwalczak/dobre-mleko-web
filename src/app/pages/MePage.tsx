@@ -163,6 +163,9 @@ function Profile({ me }: { me: Me }) {
     <div className="narrow">
       <ProfileForm me={me} submitLabel="Zapisz profil" busy={save.isPending} onSubmit={(d) => save.mutate(d)} />
       <div className="form-actions">
+        <Link className="btn btn-secondary" to="/report">
+          Zgłoś problem
+        </Link>
         {me.is_admin && (
           <a className="btn btn-secondary" href="/admin/">
             Panel admina

@@ -15,6 +15,7 @@ import { NotFoundPage } from './pages/NotFoundPage';
 import { PlacePage } from './pages/PlacePage';
 import { PrivacyPage } from './pages/PrivacyPage';
 import { RatePage } from './pages/RatePage';
+import { ReportPage } from './pages/ReportPage';
 import { StatsPage } from './pages/StatsPage';
 import { WishlistPage } from './pages/WishlistPage';
 
@@ -36,6 +37,7 @@ const router = createBrowserRouter([
         lazy: () => import('./pages/PlaceFormPage').then((m) => ({ Component: m.EditPlacePage })),
       },
       { path: '/stats', element: <StatsPage /> },
+      { path: '/report', element: <ReportPage /> },
       { path: '/me', element: <MePage /> },
       { path: '/me/wishlist', element: <WishlistPage /> },
       { path: '/members/:id/wishlist', element: <WishlistPage /> },

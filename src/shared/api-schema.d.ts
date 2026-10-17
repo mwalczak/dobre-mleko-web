@@ -915,6 +915,30 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/reports': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Reported issues
+     * @description Bugs, ideas and abuse reports members have filed, newest first, so they can check before filing the same thing again. Abuse reports are private and never listed. `q` searches titles and descriptions, tolerating typos, and sorts by relevance. 503 `reports_unavailable` when the issue tracker cannot be reached.
+     */
+    get: operations['getReports'];
+    put?: never;
+    /**
+     * Report a bug, an idea or abuse
+     * @description Files the report in the issue tracker with my e-mail and name. The first time, the tracker e-mails me a personal key for following my reports; it also e-mails me when their status changes. Abuse reports are private: only the admins and I see them.
+     */
+    post: operations['postReports'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1577,6 +1601,32 @@ export interface components {
       /** @description Pass as `cursor` for the next page; null at the end */
       next_cursor: string | null;
       total: number;
+    };
+    /** @description A bug report, idea or abuse report, as tracked in PMO. */
+    Report: {
+      /** @example DM-12 */
+      key: string;
+      /** @enum {string} */
+      type: 'bug' | 'idea' | 'abuse';
+      /** @enum {string} */
+      status: 'reported' | 'accepted' | 'in_progress' | 'done' | 'wont_fix' | 'duplicate';
+      /** @description P1 (most urgent) to P5, set by the admins */
+      priority: string;
+      title: string;
+      description: string | null;
+      /** @description Only the admins and the reporter see it (abuse reports) */
+      private: boolean;
+      /** @description Key of the original report, when a duplicate */
+      duplicate_of: string | null;
+      /** Format: date-time */
+      created_at: string;
+      /** Format: date-time */
+      updated_at: string;
+    };
+    ReportList: {
+      items: components['schemas']['Report'][];
+      /** @description Pass as `offset` for the next page; null at the end */
+      next_offset: number | null;
     };
   };
   responses: never;
@@ -3993,6 +4043,79 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['PushLog'];
+        };
+      };
+      /** @description Error */
+      '4XX': {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+    };
+  };
+  getReports: {
+    parameters: {
+      query?: {
+        /** @description `open`: reported, accepted or in progress; `closed`: done, won’t fix or duplicate */
+        status?: 'open' | 'closed';
+        q?: string;
+        limit?: number;
+        offset?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ReportList'];
+        };
+      };
+      /** @description Error */
+      '4XX': {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+    };
+  };
+  postReports: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': {
+          /** @enum {string} */
+          type: 'bug' | 'idea' | 'abuse';
+          title: string;
+          description?: string;
+        };
+      };
+    };
+    responses: {
+      /** @description OK */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Report'];
         };
       };
       /** @description Error */

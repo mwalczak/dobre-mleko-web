@@ -48,6 +48,12 @@ export function PrivacyPage() {
           niego nazwę i współrzędne miejsca; link zapisujemy przy miejscu.
         </li>
         <li>
+          <strong>Zgłoszenia (gdy coś zgłosisz):</strong> treść zgłoszenia błędu, pomysłu lub nadużycia, Twoje imię i
+          adres e-mail — trafiają do naszego trackera zgłoszeń (PMO), który zakłada Ci tam konto, wysyła e-mailem klucz
+          do śledzenia zgłoszeń i informuje o zmianach ich statusu. Zgłoszenia nadużyć widzą tylko administratorzy;
+          pozostałe zgłoszenia, bez imienia i e-maila, widzą inni członkowie.
+        </li>
+        <li>
           <strong>Dane techniczne:</strong> logi serwera (np. adres IP, czas zapytania) potrzebne do działania i
           bezpieczeństwa usługi, przechowywane krótko.
         </li>
@@ -78,6 +84,10 @@ export function PrivacyPage() {
           wpisany tekst, przybliżony obszar mapy i adres IP urządzenia, bez danych konta.
         </li>
         <li>
+          <strong>PMO</strong> — nasz tracker zgłoszeń, działający na naszym serwerze; e-maile z niego wysyłamy przez
+          Gmail (Google).
+        </li>
+        <li>
           <strong>Hosting</strong> — serwer, na którym działa usługa i przechowywane są dane oraz zdjęcia.
         </li>
       </ul>
@@ -85,7 +95,9 @@ export function PrivacyPage() {
       <h2 className="title">Jak długo</h2>
       <p>
         Dane konta i treści przechowujemy, dopóki masz konto. Po usunięciu konta usuwamy dane osobowe; Twoje treści mogą
-        zostać w aplikacji jako anonimowe („Były członek”), żeby nie psuć ocen i dyskusji innych osób.
+        zostać w aplikacji jako anonimowe („Były członek”), żeby nie psuć ocen i dyskusji innych osób. Zgłoszenia i
+        konto w trackerze zgłoszeń zostają po usunięciu konta w aplikacji — usuniemy je na prośbę wysłaną na adres
+        powyżej.
       </p>
 
       <h2 className="title">Twoje prawa</h2>

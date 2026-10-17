@@ -22,6 +22,7 @@ const MESSAGES: Record<string, string> = {
   category_exists: 'Kategoria o tej nazwie lub identyfikatorze już istnieje.',
   category_in_use: 'Ta kategoria ma miejsca — możesz ją tylko wycofać.',
   last_category: 'Co najmniej jedna kategoria musi zostać aktywna.',
+  reports_unavailable: 'Zgłoszenia są chwilowo niedostępne. Spróbuj za chwilę.',
   unrecognized_link: 'To nie wygląda na link do miejsca w Google Maps. Skopiuj go przez Udostępnij → Kopiuj link.',
 };
 
