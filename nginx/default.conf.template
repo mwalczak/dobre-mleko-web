@@ -40,6 +40,18 @@ server {
         add_header X-Content-Type-Options nosniff always;
     }
 
+    # Reports carry up to 3 screenshots or recordings of up to 50 MB each (dobre-mleko-be POST /reports).
+    location = /api/reports {
+        rewrite ^/api/(.*)$ /$1 break;
+        proxy_pass $api;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_request_buffering off;
+        client_max_body_size 160m;
+        proxy_read_timeout 300s;
+        add_header X-Content-Type-Options nosniff always;
+    }
+
     location /files/ {
         proxy_pass $api;
         add_header X-Content-Type-Options nosniff always;

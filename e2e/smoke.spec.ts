@@ -476,8 +476,8 @@ test('members cannot use the dashboard', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Brak dostępu' })).toBeVisible();
 });
 
-test('report a bug after checking what is already reported', async ({ page }) => {
-  // The API tests the PMO calls; here /api/reports is answered, so no issue tracker is needed.
+test('report a bug with a screenshot after checking what is already reported', async ({ page }) => {
+  // The API tests the PMO calls; here /api/reports* is answered, so no issue tracker is needed.
   const reported = {
     key: 'DM-1',
     type: 'bug',
@@ -485,16 +485,34 @@ test('report a bug after checking what is already reported', async ({ page }) =>
     priority: 'P2',
     title: 'Mapa nie ładuje się na iPhonie',
     description: 'Biały ekran',
+    platform: 'ios',
     private: false,
     duplicate_of: null,
     created_at: '2026-10-17T12:00:00Z',
     updated_at: '2026-10-17T12:00:00Z',
   };
-  let sent: Record<string, unknown> | null = null;
-  await page.route('**/api/reports**', (route) => {
-    if (route.request().method() === 'POST') {
-      sent = route.request().postDataJSON();
-      return route.fulfill({ status: 201, json: { ...reported, ...sent, key: 'DM-2', status: 'reported' } });
+  // Types and platforms come from PMO, labels included: the page shows them as they are.
+  const options = {
+    issue_types: [
+      { id: 'bug', label: 'Usterka' },
+      { id: 'idea', label: 'Pomysł' },
+      { id: 'abuse', label: 'Nadużycie' },
+    ],
+    platforms: [
+      { id: 'android', label: 'Android' },
+      { id: 'web', label: 'Przeglądarka' },
+    ],
+  };
+  let sent = '';
+  await page.route('**/api/reports**', async (route) => {
+    const request = route.request();
+    if (request.url().endsWith('/reports/options')) return route.fulfill({ json: options });
+    if (request.method() === 'POST') {
+      sent = request.postDataBuffer()?.toString('latin1') ?? '';
+      return route.fulfill({
+        status: 201,
+        json: { ...reported, key: 'DM-2', status: 'reported', attachments: 1, failed_files: [] },
+      });
     }
     return route.fulfill({ json: { items: [reported], next_offset: null } });
   });
@@ -503,20 +521,26 @@ test('report a bug after checking what is already reported', async ({ page }) =>
   await page.getByRole('tab', { name: 'Profil' }).click();
   await page.getByRole('link', { name: 'Zgłoś problem' }).click();
   await expect(page).toHaveURL(/\/report$/);
-  await expect(page.getByRole('heading', { name: 'Coś nie gra?' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Usterka' })).toHaveAttribute('aria-pressed', 'true');
+  // The web app preselects its own platform.
+  await expect(page.getByRole('button', { name: 'Przeglądarka' })).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('.report-all .report-row')).toContainText('Przyjęte');
 
   await page.getByLabel('W skrócie').fill('mapa nie laduje');
   await expect(page.getByText('Może to już jest zgłoszone?')).toBeVisible();
   await page.getByLabel('W skrócie').fill('Zdjęcia ładują się wolno');
   await page.getByLabel('Szczegóły').fill('Na LTE kilka sekund na zdjęcie.');
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'ekran.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from('89504e470d0a1a0a', 'hex'),
+  });
+  await expect(page.getByText('ekran.png')).toBeVisible();
   await page.getByRole('button', { name: 'Wyślij zgłoszenie' }).click();
   await expect(page.getByRole('heading', { name: 'Dzięki, mamy to.' })).toBeVisible();
-  expect(sent).toEqual({
-    type: 'bug',
-    title: 'Zdjęcia ładują się wolno',
-    description: 'Na LTE kilka sekund na zdjęcie.',
-  });
+  for (const part of ['name="type"\r\n\r\nbug', 'name="platform"\r\n\r\nweb', 'filename="ekran.png"']) {
+    expect(sent).toContain(part);
+  }
 
   // Abuse reports are private: no similar reports, and a note says so.
   await page.getByRole('button', { name: 'Zgłoś coś jeszcze' }).click();

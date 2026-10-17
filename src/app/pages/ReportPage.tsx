@@ -1,15 +1,34 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { api, ApiError, unwrap } from '../../shared/api';
+import { ApiError, postForm } from '../../shared/api';
 import { ShapeIcon } from '../../shared/components/CategoryMark';
 import { useToast } from '../../shared/components/Toast';
 import { date } from '../../shared/format';
-import { REPORT_STATUS, REPORT_TYPES, useReports, useSimilarReports, type Report, type ReportType } from '../reports';
+import {
+  CLIENT_PLATFORM,
+  isPrivateType,
+  labelOf,
+  MAX_FILE_BYTES,
+  MAX_FILES,
+  REPORT_STATUS,
+  typeLook,
+  useReportOptions,
+  useReports,
+  useSimilarReports,
+  type CreatedReport,
+  type Report,
+  type ReportChoice,
+} from '../reports';
 
-/** Report a bug, an idea or abuse (they go to PMO, the issue tracker), and see what is already reported. */
+/**
+ * Report a bug, an idea or abuse (they go to PMO, the issue tracker), and see what is already reported. The types and
+ * platforms offered come from PMO.
+ */
 export function ReportPage() {
-  const [sent, setSent] = useState<Report | null>(null);
+  const options = useReportOptions();
+  const [sent, setSent] = useState<CreatedReport | null>(null);
+  const unavailable = options.isError;
   return (
     <div className="page narrow report">
       <header className="page-head">
@@ -19,35 +38,56 @@ export function ReportPage() {
           Zgłoś błąd, podziel się pomysłem albo daj znać o nadużyciu. Najpierw zerknij, czy ktoś już tego nie zgłosił.
         </p>
       </header>
-      {sent ? <Sent report={sent} onAnother={() => setSent(null)} /> : <ReportForm onSent={setSent} />}
-      <ReportList />
+      {unavailable && <p className="notice">Zgłoszenia są chwilowo niedostępne. Spróbuj za chwilę.</p>}
+      {options.isLoading && <p className="label">Ładowanie…</p>}
+      {options.data &&
+        (sent ? (
+          <Sent report={sent} types={options.data.issue_types} onAnother={() => setSent(null)} />
+        ) : (
+          <ReportForm types={options.data.issue_types} platforms={options.data.platforms} onSent={setSent} />
+        ))}
+      <ReportList types={options.data?.issue_types} />
     </div>
   );
 }
 
-function ReportForm({ onSent }: { onSent: (r: Report) => void }) {
+function ReportForm({
+  types,
+  platforms,
+  onSent,
+}: {
+  types: ReportChoice[];
+  platforms: ReportChoice[];
+  onSent: (r: CreatedReport) => void;
+}) {
   const client = useQueryClient();
   const toast = useToast();
-  const [type, setType] = useState<ReportType>('bug');
+  const [type, setType] = useState(types[0]?.id ?? '');
+  const [platform, setPlatform] = useState(
+    platforms.some((p) => p.id === CLIENT_PLATFORM) ? CLIENT_PLATFORM : (platforms[0]?.id ?? ''),
+  );
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [files, setFiles] = useState<File[]>([]);
   const [q, setQ] = useState('');
 
   useEffect(() => {
     const t = setTimeout(() => setQ(title.trim()), 350);
     return () => clearTimeout(t);
   }, [title]);
-  // Abuse reports are private, so there is nothing to compare them with.
-  const similar = useSimilarReports(type === 'abuse' ? '' : q);
-  const matches = q.length >= 3 && type !== 'abuse' ? (similar.data?.items ?? []) : [];
+  const similar = useSimilarReports(isPrivateType(type) ? '' : q);
+  const matches = q.length >= 3 && !isPrivateType(type) ? (similar.data?.items ?? []) : [];
 
   const send = useMutation({
-    mutationFn: () =>
-      unwrap(
-        api.POST('/reports', {
-          body: { type, title: title.trim(), description: description.trim() || undefined },
-        }),
-      ),
+    mutationFn: () => {
+      const form = new FormData();
+      form.append('type', type);
+      form.append('title', title.trim());
+      if (description.trim()) form.append('description', description.trim());
+      if (platform) form.append('platform', platform);
+      for (const f of files) form.append('file', f, f.name);
+      return postForm<CreatedReport>('/reports', form);
+    },
     onSuccess: (report) => {
       toast.ok(`Wysłano zgłoszenie ${report.key}.`);
       onSent(report);
@@ -67,13 +107,38 @@ function ReportForm({ onSent }: { onSent: (r: Report) => void }) {
       <fieldset className="field">
         <legend className="label">Co zgłaszasz</legend>
         <div className="chips">
-          {(Object.keys(REPORT_TYPES) as ReportType[]).map((t) => (
-            <button key={t} type="button" className="chip" aria-pressed={type === t} onClick={() => setType(t)}>
-              <TypeMark type={t} /> {REPORT_TYPES[t].label}
+          {types.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              className="chip"
+              aria-pressed={type === t.id}
+              onClick={() => setType(t.id)}
+            >
+              <TypeMark type={t.id} /> {t.label}
             </button>
           ))}
         </div>
       </fieldset>
+
+      {platforms.length > 1 && (
+        <fieldset className="field">
+          <legend className="label">Gdzie</legend>
+          <div className="chips">
+            {platforms.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                className="chip"
+                aria-pressed={platform === p.id}
+                onClick={() => setPlatform(p.id)}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+      )}
 
       <div className="field">
         <label htmlFor="report-title">W skrócie</label>
@@ -93,7 +158,7 @@ function ReportForm({ onSent }: { onSent: (r: Report) => void }) {
           <h2 className="label">Może to już jest zgłoszone?</h2>
           <ul className="report-list">
             {matches.map((r) => (
-              <ReportRow key={r.key} report={r} compact />
+              <ReportRow key={r.key} report={r} types={types} compact />
             ))}
           </ul>
         </section>
@@ -105,13 +170,15 @@ function ReportForm({ onSent }: { onSent: (r: Report) => void }) {
           id="report-description"
           rows={5}
           maxLength={5000}
-          placeholder={REPORT_TYPES[type].placeholder}
+          placeholder={typeLook(type).placeholder}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
       </div>
 
-      {type === 'abuse' && (
+      <AttachmentPicker files={files} onChange={setFiles} />
+
+      {isPrivateType(type) && (
         <p className="notice">Zgłoszenie nadużycia jest prywatne: zobaczą je tylko administratorzy.</p>
       )}
       <p className="data muted">
@@ -120,19 +187,82 @@ function ReportForm({ onSent }: { onSent: (r: Report) => void }) {
       </p>
 
       <div className="form-actions">
-        <button type="submit" className="btn btn-primary" disabled={title.trim().length < 3 || send.isPending}>
-          Wyślij zgłoszenie
+        <button type="submit" className="btn btn-primary" disabled={!type || title.trim().length < 3 || send.isPending}>
+          {send.isPending && files.length ? 'Wysyłanie plików…' : 'Wyślij zgłoszenie'}
         </button>
       </div>
     </form>
   );
 }
 
-function Sent({ report, onAnother }: { report: Report; onAnother: () => void }) {
+/** Screenshots and recordings: up to MAX_FILES images or videos of up to 50 MB each, checked before sending. */
+function AttachmentPicker({ files, onChange }: { files: File[]; onChange: (files: File[]) => void }) {
+  const toast = useToast();
+  const previews = useMemo(
+    () => files.map((f) => (f.type.startsWith('image/') ? URL.createObjectURL(f) : null)),
+    [files],
+  );
+  useEffect(() => () => previews.forEach((u) => u && URL.revokeObjectURL(u)), [previews]);
+
+  const add = (picked: FileList | null) => {
+    const ok: File[] = [];
+    for (const f of Array.from(picked ?? [])) {
+      if (!/^(image|video)\//.test(f.type)) toast.fail(new Error(`${f.name}: dodaj zdjęcie albo nagranie.`));
+      else if (f.size > MAX_FILE_BYTES) toast.fail(new Error(`${f.name}: plik może mieć najwyżej 50 MB.`));
+      else ok.push(f);
+    }
+    const next = [...files, ...ok];
+    if (next.length > MAX_FILES) toast.fail(new Error(`Najwyżej ${MAX_FILES} pliki.`));
+    onChange(next.slice(0, MAX_FILES));
+  };
+
+  return (
+    <fieldset className="field">
+      <legend className="label">Zrzuty ekranu i nagrania (opcjonalnie)</legend>
+      {files.length > 0 && (
+        <ul className="report-files">
+          {files.map((f, i) => (
+            <li key={`${f.name}-${i}`} className="report-file">
+              {previews[i] ? <img src={previews[i]!} alt="" /> : <span className="report-file-video">▶</span>}
+              <span className="data">
+                {f.name} · {(f.size / 1024 / 1024).toFixed(1)} MB
+              </span>
+              <button
+                type="button"
+                className="btn btn-small"
+                aria-label={`Usuń ${f.name}`}
+                onClick={() => onChange(files.filter((_, j) => j !== i))}
+              >
+                ×
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {files.length < MAX_FILES && (
+        <label className="btn btn-secondary report-add-file">
+          Dodaj plik
+          <input
+            type="file"
+            accept="image/*,video/*"
+            multiple
+            className="visually-hidden"
+            onChange={(e) => {
+              add(e.target.files);
+              e.target.value = '';
+            }}
+          />
+        </label>
+      )}
+    </fieldset>
+  );
+}
+
+function Sent({ report, types, onAnother }: { report: CreatedReport; types: ReportChoice[]; onAnother: () => void }) {
   return (
     <section className="panel report-sent" aria-live="polite">
       <p className="label">
-        {report.key} · {REPORT_TYPES[report.type].label}
+        {report.key} · {labelOf(types, report.type)}
       </p>
       <h2 className="title">Dzięki, mamy to.</h2>
       <p>
@@ -141,6 +271,9 @@ function Sent({ report, onAnother }: { report: Report; onAnother: () => void }) 
           : 'Zgłoszenie jest już na liście poniżej. '}
         Damy znać e-mailem, gdy zmieni się jego status.
       </p>
+      {report.failed_files.length > 0 && (
+        <p className="notice">Nie udało się dołączyć: {report.failed_files.join(', ')}.</p>
+      )}
       <div className="form-actions">
         <button type="button" className="btn btn-secondary" onClick={onAnother}>
           Zgłoś coś jeszcze
@@ -153,7 +286,7 @@ function Sent({ report, onAnother }: { report: Report; onAnother: () => void }) 
   );
 }
 
-function ReportList() {
+function ReportList({ types }: { types: ReportChoice[] | undefined }) {
   const [status, setStatus] = useState<'open' | 'closed'>('open');
   const list = useReports(status);
   const items = list.data?.pages.flatMap((p) => p.items) ?? [];
@@ -189,7 +322,7 @@ function ReportList() {
       )}
       <ul className="report-list">
         {items.map((r) => (
-          <ReportRow key={r.key} report={r} />
+          <ReportRow key={r.key} report={r} types={types} />
         ))}
       </ul>
       {list.hasNextPage && (
@@ -206,13 +339,21 @@ function ReportList() {
   );
 }
 
-function ReportRow({ report: r, compact = false }: { report: Report; compact?: boolean }) {
+function ReportRow({
+  report: r,
+  types,
+  compact = false,
+}: {
+  report: Report;
+  types: ReportChoice[] | undefined;
+  compact?: boolean;
+}) {
   return (
     <li className="report-row">
       <TypeMark type={r.type} size={18} />
       <div className="report-body">
         <p className="label">
-          {r.key} · {REPORT_TYPES[r.type].label} · {date(r.created_at)}
+          {r.key} · {labelOf(types, r.type)} · {date(r.created_at)}
         </p>
         <h3 className="report-title">{r.title}</h3>
         {!compact && r.description && <p className="report-description">{r.description}</p>}
@@ -225,7 +366,7 @@ function ReportRow({ report: r, compact = false }: { report: Report; compact?: b
   );
 }
 
-function TypeMark({ type, size = 14 }: { type: ReportType; size?: number }) {
-  const t = REPORT_TYPES[type];
-  return <ShapeIcon shape={t.shape} color={t.color} size={size} />;
+function TypeMark({ type, size = 14 }: { type: string; size?: number }) {
+  const look = typeLook(type);
+  return <ShapeIcon shape={look.shape} color={look.color} size={size} />;
 }

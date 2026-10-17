@@ -1670,6 +1670,45 @@ input[type='range'] {
   color: var(--paper);
 }
 
+.report-files {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.report-file {
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.report-file img,
+.report-file-video {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border: var(--line-1);
+}
+
+.report-file-video {
+  display: grid;
+  place-items: center;
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.report-file .data {
+  overflow-wrap: anywhere;
+}
+
+.report-add-file {
+  align-self: flex-start;
+}
+
 @media (max-width: 520px) {
   .report-row {
     grid-template-columns: auto 1fr;

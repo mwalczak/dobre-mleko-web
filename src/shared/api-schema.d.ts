@@ -915,6 +915,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/reports/options': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * What can be reported
+     * @description The issue types and platforms the report form offers, with their labels, as configured in the issue tracker (PMO). Show them in this order; preselect the platform the app runs on. 503 `reports_unavailable` when the tracker cannot be reached.
+     */
+    get: operations['getReportsOptions'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/reports': {
     parameters: {
       query?: never;
@@ -930,7 +950,7 @@ export interface paths {
     put?: never;
     /**
      * Report a bug, an idea or abuse
-     * @description Files the report in the issue tracker with my e-mail and name. The first time, the tracker e-mails me a personal key for following my reports; it also e-mails me when their status changes. Abuse reports are private: only the admins and I see them.
+     * @description multipart/form-data with the fields `type` (an id from GET /reports/options), `title` (3–200 characters), optionally `description` (up to 5000) and `platform` (an id from the options), and up to 3 screenshots or recordings in `file` fields (images or videos, up to 50 MB each). Files the tracker rejects are listed in `failed_files`; the report is filed anyway. The report goes to the issue tracker with my e-mail and name; the first time, it e-mails me a personal key for following my reports, and it e-mails me when their status changes. Abuse reports are private: only the admins and I see them.
      */
     post: operations['postReports'];
     delete?: never;
@@ -1602,18 +1622,32 @@ export interface components {
       next_cursor: string | null;
       total: number;
     };
+    ReportChoice: {
+      id: string;
+      /** @description In the project’s language, as set in PMO */
+      label: string;
+    };
+    /** @description What the report form offers, configured in the issue tracker (PMO). */
+    ReportOptions: {
+      /** @description Types to offer, in order (e.g. bug, idea, abuse) */
+      issue_types: components['schemas']['ReportChoice'][];
+      /** @description Platforms to offer, e.g. web, android, ios */
+      platforms: components['schemas']['ReportChoice'][];
+    };
     /** @description A bug report, idea or abuse report, as tracked in PMO. */
     Report: {
       /** @example DM-12 */
       key: string;
-      /** @enum {string} */
-      type: 'bug' | 'idea' | 'abuse';
+      /** @description An id from `issue_types` in GET /reports/options */
+      type: string;
       /** @enum {string} */
       status: 'reported' | 'accepted' | 'in_progress' | 'done' | 'wont_fix' | 'duplicate';
       /** @description P1 (most urgent) to P5, set by the admins */
       priority: string;
       title: string;
       description: string | null;
+      /** @description An id from `platforms` in GET /reports/options */
+      platform: string | null;
       /** @description Only the admins and the reporter see it (abuse reports) */
       private: boolean;
       /** @description Key of the original report, when a duplicate */
@@ -1622,6 +1656,32 @@ export interface components {
       created_at: string;
       /** Format: date-time */
       updated_at: string;
+    };
+    CreatedReport: {
+      /** @example DM-12 */
+      key: string;
+      /** @description An id from `issue_types` in GET /reports/options */
+      type: string;
+      /** @enum {string} */
+      status: 'reported' | 'accepted' | 'in_progress' | 'done' | 'wont_fix' | 'duplicate';
+      /** @description P1 (most urgent) to P5, set by the admins */
+      priority: string;
+      title: string;
+      description: string | null;
+      /** @description An id from `platforms` in GET /reports/options */
+      platform: string | null;
+      /** @description Only the admins and the reporter see it (abuse reports) */
+      private: boolean;
+      /** @description Key of the original report, when a duplicate */
+      duplicate_of: string | null;
+      /** Format: date-time */
+      created_at: string;
+      /** Format: date-time */
+      updated_at: string;
+      /** @description Files attached */
+      attachments: number;
+      /** @description Names of files the tracker did not accept */
+      failed_files: string[];
     };
     ReportList: {
       items: components['schemas']['Report'][];
@@ -4056,6 +4116,35 @@ export interface operations {
       };
     };
   };
+  getReportsOptions: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ReportOptions'];
+        };
+      };
+      /** @description Error */
+      '4XX': {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+    };
+  };
   getReports: {
     parameters: {
       query?: {
@@ -4098,16 +4187,7 @@ export interface operations {
       path?: never;
       cookie?: never;
     };
-    requestBody: {
-      content: {
-        'application/json': {
-          /** @enum {string} */
-          type: 'bug' | 'idea' | 'abuse';
-          title: string;
-          description?: string;
-        };
-      };
-    };
+    requestBody?: never;
     responses: {
       /** @description OK */
       201: {
@@ -4115,7 +4195,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['Report'];
+          'application/json': components['schemas']['CreatedReport'];
         };
       };
       /** @description Error */

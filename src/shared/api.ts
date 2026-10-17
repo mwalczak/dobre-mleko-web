@@ -79,3 +79,19 @@ export async function uploadImage<T>(path: '/photos' | '/me/avatar', file: Blob,
   }
   return body as T;
 }
+
+/** multipart/form-data POST of fields and files (POST /reports); returns the JSON or throws an ApiError. */
+export async function postForm<T>(path: '/reports', form: FormData): Promise<T> {
+  const token = getToken();
+  const response = await fetch(API_BASE + path, {
+    method: 'POST',
+    headers: token ? { authorization: `Bearer ${token}` } : {},
+    body: form,
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    if (response.status === 401 && token) setToken(null);
+    throw new ApiError(response.status, body.error ?? 'error', body.message ?? response.statusText, body);
+  }
+  return body as T;
+}
