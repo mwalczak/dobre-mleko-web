@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { ApiError, postForm } from '../../shared/api';
 import { ShapeIcon } from '../../shared/components/CategoryMark';
 import { useToast } from '../../shared/components/Toast';
@@ -63,8 +63,13 @@ function ReportForm({
   const client = useQueryClient();
   const toast = useToast();
   const [type, setType] = useState(types[0]?.id ?? '');
+  // The native apps open this page with ?platform=android (or ios); otherwise this web app's own platform.
+  const [params] = useSearchParams();
   const [platform, setPlatform] = useState(
-    platforms.some((p) => p.id === CLIENT_PLATFORM) ? CLIENT_PLATFORM : (platforms[0]?.id ?? ''),
+    () =>
+      [params.get('platform'), CLIENT_PLATFORM].find((id) => platforms.some((p) => p.id === id)) ??
+      platforms[0]?.id ??
+      '',
   );
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');

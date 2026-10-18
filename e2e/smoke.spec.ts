@@ -534,6 +534,10 @@ test('report a bug with a screenshot after checking what is already reported', a
   await expect(page.getByRole('button', { name: 'Usterka' })).toHaveAttribute('aria-pressed', 'true');
   // The web app preselects its own platform.
   await expect(page.getByRole('button', { name: 'Przeglądarka' })).toHaveAttribute('aria-pressed', 'true');
+  // Opened from the Android app: Android is preselected.
+  await page.goto('/report?platform=android');
+  await expect(page.getByRole('button', { name: 'Android' })).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: 'Przeglądarka' }).click();
   await expect(page.locator('.report-all .report-row')).toContainText('Przyjęte');
 
   await page.getByLabel('W skrócie').fill('mapa nie laduje');
