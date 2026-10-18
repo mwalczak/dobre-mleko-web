@@ -476,6 +476,16 @@ test('members cannot use the dashboard', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Brak dostępu' })).toBeVisible();
 });
 
+test('the report button is on every screen but the report page', async ({ page }) => {
+  await signIn(page, 'kuba@example.com');
+  const fab = page.getByRole('link', { name: 'Zgłoś błąd lub pomysł' });
+  await page.getByRole('link', { name: 'Mapa' }).first().click();
+  await fab.click();
+  await expect(page).toHaveURL(/\/report$/);
+  await expect(page.getByRole('heading', { name: 'Coś nie gra?' })).toBeVisible();
+  await expect(fab).toHaveCount(0);
+});
+
 test('report a bug with a screenshot after checking what is already reported', async ({ page }) => {
   // The API tests the PMO calls; here /api/reports* is answered, so no issue tracker is needed.
   const reported = {

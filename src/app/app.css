@@ -41,6 +41,31 @@
   min-height: calc(100vh - 70px);
 }
 
+/* While testing: report a bug or an idea from any screen. */
+.report-fab {
+  position: fixed;
+  right: var(--space-5);
+  bottom: calc(var(--space-5) + env(safe-area-inset-bottom, 0px));
+  z-index: 40;
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  background: var(--surface);
+  color: var(--ink);
+  border: var(--line-3);
+}
+
+.report-fab.on-map {
+  bottom: calc(var(--space-5) + 56px + env(safe-area-inset-bottom, 0px));
+}
+
+.report-fab:hover,
+.report-fab:focus-visible {
+  background: var(--ink);
+  color: var(--paper);
+}
+
 .page {
   max-width: var(--content);
   margin: 0 auto;
@@ -1510,6 +1535,15 @@ input[type='range'] {
 
   .app-main {
     padding-bottom: 72px;
+  }
+
+  .report-fab {
+    right: var(--space-4);
+    bottom: calc(56px + var(--space-4) + env(safe-area-inset-bottom, 0px));
+  }
+
+  .report-fab.on-map {
+    bottom: calc(56px + var(--space-4) + 56px + env(safe-area-inset-bottom, 0px));
   }
 
   .page {

@@ -4,6 +4,7 @@ import { useCategories } from '../shared/categories';
 import { Brand } from '../shared/components/Brand';
 import { SignIn } from '../shared/components/SignIn';
 import { useMe, useSessionReset, useToken } from '../shared/session';
+import { ReportFab } from './components/ReportFab';
 import { OnboardingPage } from './pages/OnboardingPage';
 
 const NAV = [
@@ -44,6 +45,7 @@ export function Shell() {
       <main className="app-main">
         <Outlet />
       </main>
+      <ReportFab />
       <nav className="nav-bottom" aria-label="Główne">
         {NAV.map((n) => (
           <NavLink key={n.to} to={n.to} end={n.end} className="nav-link">
