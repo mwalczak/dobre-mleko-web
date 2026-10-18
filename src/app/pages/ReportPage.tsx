@@ -4,7 +4,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { ApiError, postForm } from '../../shared/api';
 import { ShapeIcon } from '../../shared/components/CategoryMark';
 import { useToast } from '../../shared/components/Toast';
-import { date } from '../../shared/format';
+import { date, plural } from '../../shared/format';
 import {
   CLIENT_PLATFORM,
   isPrivateType,
@@ -13,6 +13,7 @@ import {
   MAX_FILES,
   statusLabel,
   typeLook,
+  useReportComments,
   useReportOptions,
   useReports,
   useSimilarReports,
@@ -362,12 +363,40 @@ function ReportRow({
         </p>
         <h3 className="report-title">{r.title}</h3>
         {!compact && r.description && <p className="report-description">{r.description}</p>}
+        {!compact && r.comment_count > 0 && <ReportComments reportKey={r.key} count={r.comment_count} />}
       </div>
       <span className="badge report-status" data-status={r.status}>
         {statusLabel(r.status)}
         {r.duplicate_of && ` ${r.duplicate_of}`}
       </span>
     </li>
+  );
+}
+
+/** Comments from the team on a report (e.g. why it won't be fixed), opened on demand. */
+function ReportComments({ reportKey, count }: { reportKey: string; count: number }) {
+  const [open, setOpen] = useState(false);
+  const comments = useReportComments(reportKey, open);
+  return (
+    <div className="report-comments">
+      <button type="button" className="link-button" aria-expanded={open} onClick={() => setOpen(!open)}>
+        {open ? 'Ukryj komentarze' : `${count} ${plural(count, ['komentarz', 'komentarze', 'komentarzy'])}`}
+      </button>
+      {open && comments.isLoading && <p className="label">Ładowanie…</p>}
+      {open && comments.isError && <p className="notice">Nie udało się wczytać komentarzy.</p>}
+      {open && comments.data && (
+        <ul className="report-comment-list">
+          {comments.data.items.map((c) => (
+            <li key={c.id} className="report-comment">
+              <p className="label">
+                {c.author ?? 'Zespół'} · {date(c.created_at)}
+              </p>
+              <p>{c.body}</p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 

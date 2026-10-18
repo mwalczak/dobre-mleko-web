@@ -498,6 +498,7 @@ test('report a bug with a screenshot after checking what is already reported', a
     platform: 'ios',
     private: false,
     duplicate_of: null,
+    comment_count: 1,
     created_at: '2026-10-17T12:00:00Z',
     updated_at: '2026-10-17T12:00:00Z',
   };
@@ -517,11 +518,20 @@ test('report a bug with a screenshot after checking what is already reported', a
   await page.route('**/api/reports**', async (route) => {
     const request = route.request();
     if (request.url().endsWith('/reports/options')) return route.fulfill({ json: options });
+    if (request.url().endsWith('/reports/DM-1/comments')) {
+      return route.fulfill({
+        json: {
+          items: [
+            { id: 'c1', body: 'Naprawione w wersji 1.2.', author: 'Mateusz', created_at: '2026-10-18T10:00:00Z' },
+          ],
+        },
+      });
+    }
     if (request.method() === 'POST') {
       sent = request.postDataBuffer()?.toString('latin1') ?? '';
       return route.fulfill({
         status: 201,
-        json: { ...reported, key: 'DM-2', status: 'reported', attachments: 1, failed_files: [] },
+        json: { ...reported, key: 'DM-2', status: 'reported', comment_count: 0, attachments: 1, failed_files: [] },
       });
     }
     return route.fulfill({ json: { items: [reported], next_offset: null } });
@@ -539,6 +549,10 @@ test('report a bug with a screenshot after checking what is already reported', a
   await expect(page.getByRole('button', { name: 'Android' })).toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('button', { name: 'Przeglądarka' }).click();
   await expect(page.locator('.report-all .report-row')).toContainText('Przyjęte');
+  // Comments from the team open under the report.
+  await page.getByRole('button', { name: '1 komentarz' }).click();
+  await expect(page.locator('.report-comment')).toContainText('Naprawione w wersji 1.2.');
+  await expect(page.locator('.report-comment')).toContainText('Mateusz');
 
   await page.getByLabel('W skrócie').fill('mapa nie laduje');
   await expect(page.getByText('Może to już jest zgłoszone?')).toBeVisible();

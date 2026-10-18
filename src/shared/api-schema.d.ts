@@ -959,6 +959,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/reports/{key}/comments': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Comments on a report
+     * @description Comments from the admins (or others) on a report, oldest first, e.g. why it won’t be fixed. `comment_count` on a report says whether there are any.
+     */
+    get: operations['getReportsByKeyComments'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1652,10 +1672,27 @@ export interface components {
       private: boolean;
       /** @description Key of the original report, when a duplicate */
       duplicate_of: string | null;
+      /**
+       * @description Comments to show (GET /reports/{key}/comments)
+       * @default 0
+       */
+      comment_count: number;
       /** Format: date-time */
       created_at: string;
       /** Format: date-time */
       updated_at: string;
+    };
+    /** @description A comment on a report, e.g. why it won’t be fixed. */
+    ReportComment: {
+      id: string;
+      body: string;
+      /** @description Who wrote it, e.g. an admin; null if unknown */
+      author: string | null;
+      /** Format: date-time */
+      created_at: string;
+    };
+    ReportCommentList: {
+      items: components['schemas']['ReportComment'][];
     };
     CreatedReport: {
       /** @example DM-12 */
@@ -1674,6 +1711,11 @@ export interface components {
       private: boolean;
       /** @description Key of the original report, when a duplicate */
       duplicate_of: string | null;
+      /**
+       * @description Comments to show (GET /reports/{key}/comments)
+       * @default 0
+       */
+      comment_count: number;
       /** Format: date-time */
       created_at: string;
       /** Format: date-time */
@@ -4196,6 +4238,37 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['CreatedReport'];
+        };
+      };
+      /** @description Error */
+      '4XX': {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+    };
+  };
+  getReportsByKeyComments: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        key: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ReportCommentList'];
         };
       };
       /** @description Error */

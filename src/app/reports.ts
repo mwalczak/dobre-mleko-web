@@ -73,6 +73,16 @@ export function useSimilarReports(q: string) {
   });
 }
 
+/** A report's comments (e.g. why it won't be fixed), loaded when they are opened. */
+export function useReportComments(key: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ['reports', 'comments', key],
+    queryFn: () => unwrap(api.GET('/reports/{key}/comments', { params: { path: { key } } })),
+    enabled,
+    staleTime: 60_000,
+  });
+}
+
 export function useReports(status: 'open' | 'closed') {
   return useInfiniteQuery({
     queryKey: ['reports', 'list', status],
