@@ -11,7 +11,7 @@ import {
   labelOf,
   MAX_FILE_BYTES,
   MAX_FILES,
-  REPORT_STATUS,
+  statusLabel,
   typeLook,
   useReportOptions,
   useReports,
@@ -364,7 +364,7 @@ function ReportRow({
         {!compact && r.description && <p className="report-description">{r.description}</p>}
       </div>
       <span className="badge report-status" data-status={r.status}>
-        {REPORT_STATUS[r.status]}
+        {statusLabel(r.status)}
         {r.duplicate_of && ` ${r.duplicate_of}`}
       </span>
     </li>

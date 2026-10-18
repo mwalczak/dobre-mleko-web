@@ -944,7 +944,7 @@ export interface paths {
     };
     /**
      * Reported issues
-     * @description Bugs, ideas and abuse reports members have filed, newest first, so they can check before filing the same thing again. Abuse reports are private and never listed. `q` searches titles and descriptions, tolerating typos, and sorts by relevance. 503 `reports_unavailable` when the issue tracker cannot be reached.
+     * @description Bugs, ideas and abuse reports members have filed, newest first, so they can check before filing the same thing again. Abuse reports are private and never listed, nor are types members cannot report (such as the admins’ todos), so a page may hold fewer than `limit`. `q` searches titles and descriptions, tolerating typos, and sorts by relevance. 503 `reports_unavailable` when the issue tracker cannot be reached.
      */
     get: operations['getReports'];
     put?: never;
@@ -1640,8 +1640,8 @@ export interface components {
       key: string;
       /** @description An id from `issue_types` in GET /reports/options */
       type: string;
-      /** @enum {string} */
-      status: 'reported' | 'accepted' | 'in_progress' | 'done' | 'wont_fix' | 'duplicate';
+      /** @description As tracked in PMO: `reported`, `accepted`, `in_progress`, `in_review`, `waiting_for_release`, `done`, `wont_fix` or `duplicate`. Not a closed list: PMO may add statuses, so show unknown ones as they are. */
+      status: string;
       /** @description P1 (most urgent) to P5, set by the admins */
       priority: string;
       title: string;
@@ -1662,8 +1662,8 @@ export interface components {
       key: string;
       /** @description An id from `issue_types` in GET /reports/options */
       type: string;
-      /** @enum {string} */
-      status: 'reported' | 'accepted' | 'in_progress' | 'done' | 'wont_fix' | 'duplicate';
+      /** @description As tracked in PMO: `reported`, `accepted`, `in_progress`, `in_review`, `waiting_for_release`, `done`, `wont_fix` or `duplicate`. Not a closed list: PMO may add statuses, so show unknown ones as they are. */
+      status: string;
       /** @description P1 (most urgent) to P5, set by the admins */
       priority: string;
       title: string;
@@ -4148,7 +4148,7 @@ export interface operations {
   getReports: {
     parameters: {
       query?: {
-        /** @description `open`: reported, accepted or in progress; `closed`: done, won’t fix or duplicate */
+        /** @description `open`: reported, accepted, in progress, in review or waiting for release; `closed`: done, won’t fix or duplicate */
         status?: 'open' | 'closed';
         q?: string;
         limit?: number;

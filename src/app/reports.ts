@@ -5,7 +5,6 @@ import { api, unwrap, type Schemas } from '../shared/api';
 export type Report = Schemas['Report'];
 export type CreatedReport = Schemas['CreatedReport'];
 export type ReportChoice = Schemas['ReportChoice'];
-export type ReportStatus = Report['status'];
 
 /** This client's platform, preselected when the project offers it. */
 export const CLIENT_PLATFORM = 'web';
@@ -37,14 +36,19 @@ export const typeLook = (id: string) => TYPE_LOOK[id] ?? PLAIN_LOOK;
 /** Abuse reports are private in PMO: never listed, so nothing to compare them with. */
 export const isPrivateType = (id: string) => id === 'abuse';
 
-export const REPORT_STATUS: Record<ReportStatus, string> = {
+const REPORT_STATUS: Record<string, string> = {
   reported: 'Zgłoszone',
   accepted: 'Przyjęte',
   in_progress: 'W toku',
+  in_review: 'W przeglądzie',
+  waiting_for_release: 'Czeka na wydanie',
   done: 'Zrobione',
   wont_fix: 'Nie zrobimy',
   duplicate: 'Duplikat',
 };
+
+/** The status as people should read it; one PMO adds later shows as it is until it gets a label here. */
+export const statusLabel = (status: string) => REPORT_STATUS[status] ?? status.replaceAll('_', ' ');
 
 /** The issue types and platforms to offer, with labels, as configured in PMO. */
 export function useReportOptions() {
