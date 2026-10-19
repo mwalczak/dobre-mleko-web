@@ -83,8 +83,8 @@ function Welcome() {
           miejsca.
         </span>
       </h1>
-      <p className="welcome-about">Prywatna aplikacja do polecania i oceniania miejsc w gronie przyjaciół.</p>
-      <p className="label">Wstęp tylko dla osób z listy</p>
+      <p className="welcome-about">Aplikacja do polecania i oceniania miejsc w gronie przyjaciół.</p>
+      <p className="label">Na czas testów wstęp tylko dla osób z listy</p>
       <SignIn />
       <p className="label welcome-links">
         <Link to="/o-aplikacji">O aplikacji</Link> · <Link to="/privacy">Prywatność</Link> ·{' '}

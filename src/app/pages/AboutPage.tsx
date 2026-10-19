@@ -10,9 +10,9 @@ export function AboutPage() {
       <p className="label">Dobre Mleko · est. 2026 · Rybnik</p>
 
       <p>
-        <strong>Dobre Mleko</strong> to prywatna aplikacja do polecania i oceniania miejsc w zamkniętej grupie
-        przyjaciół. Zamiast tysięcy anonimowych opinii widzisz oceny ludzi, których znasz i którym ufasz — kawiarnie,
-        restauracje, bary, hotele i wszystko, co warto odwiedzić.
+        <strong>Dobre Mleko</strong> to aplikacja do polecania i oceniania miejsc wśród przyjaciół. Zamiast tysięcy
+        anonimowych opinii widzisz oceny ludzi, których znasz i którym ufasz — kawiarnie, restauracje, bary, hotele i
+        wszystko, co warto odwiedzić.
       </p>
 
       <h2 className="title">Co można w niej zrobić</h2>
@@ -40,8 +40,9 @@ export function AboutPage() {
 
       <h2 className="title">Dla kogo</h2>
       <p>
-        Do Dobrego Mleka wchodzi się tylko z zaproszenia. Dzięki temu oceny są szczere, a polecenia pochodzą od ludzi,
-        których znasz. Nie ma reklam ani śledzenia — szczegóły w <Link to="/privacy">polityce prywatności</Link>.
+        Dla każdego, kto chce polecać miejsca znajomym i korzystać z ich poleceń. Na czas testów do Dobrego Mleka
+        wchodzi się tylko z zaproszenia — aplikację sprawdza pierwsza grupa użytkowników, a po testach otworzymy ją
+        szerzej. Nie ma reklam ani śledzenia — szczegóły w <Link to="/privacy">polityce prywatności</Link>.
       </p>
 
       <h2 className="title">Gdzie działa</h2>
@@ -58,16 +59,17 @@ export function AboutPage() {
       <section lang="en" className="about-en">
         <h2 className="title">About Dobre Mleko (in English)</h2>
         <p>
-          Dobre Mleko is a private, invite-only app for recommending and rating places — cafés, restaurants, bars,
-          hotels and more — within a closed group of friends, so recommendations come from people you know and trust
-          instead of anonymous reviews. Members add places (from an address search, a Google Maps link or a pin on the
-          map), rate them on four criteria with photos, award a limited number of monthly “Gold Stars”, discover
-          friends’ picks on a list or map, keep a “want to visit” list, comment and compare tastes.
+          Dobre Mleko is an app for recommending and rating places — cafés, restaurants, bars, hotels and more — among
+          friends, so recommendations come from people you know and trust instead of anonymous reviews. Members add
+          places (from an address search, a Google Maps link or a pin on the map), rate them on four criteria with
+          photos, award a limited number of monthly “Gold Stars”, discover friends’ picks on a list or map, keep a “want
+          to visit” list, comment and compare tastes.
         </p>
         <p>
           It is available as native iOS (Swift) and Android (Kotlin) apps and as a web app at dobre-mleko.app, all
-          backed by one TypeScript API with PostgreSQL/PostGIS. The product is in beta with its first users in Rybnik,
-          Poland. No ads, no tracking. Contact: <a href="mailto:kontakt@dobre-mleko.app">kontakt@dobre-mleko.app</a>.
+          backed by one TypeScript API with PostgreSQL/PostGIS. The product is in beta testing with its first users in
+          Rybnik, Poland; during the tests access is invite-only, and it will open more widely afterwards. No ads, no
+          tracking. Contact: <a href="mailto:kontakt@dobre-mleko.app">kontakt@dobre-mleko.app</a>.
         </p>
       </section>
     </div>
