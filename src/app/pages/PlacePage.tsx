@@ -305,7 +305,7 @@ function CommentItem({ c, refresh }: { c: Comment; refresh: () => Promise<unknow
       <Avatar name={c.author.display_name} url={c.author.avatar_url} size={36} ring={c.is_mine ? 'me' : undefined} />
       <div className="comment-body">
         <p className="label">
-          {c.author.display_name}
+          <MemberLink member={c.author} />
           {c.author_rating != null && ` · ocena ${rating(c.author_rating)}`} · {ago(c.created_at)}
           {c.updated_at && ' · edytowany'}
         </p>
@@ -356,12 +356,8 @@ function CommentItem({ c, refresh }: { c: Comment; refresh: () => Promise<unknow
   );
 }
 
-/** A member's name, linking to their "Chcę odwiedzić" list (the web has no member profile yet). */
+/** A member's name, linking to their profile (S50). */
 function MemberLink({ member }: { member: Profile }) {
   if (member.status === 'deleted') return <>{member.display_name}</>;
-  return (
-    <Link to={`/members/${member.id}/wishlist`} state={{ name: member.display_name }} title="Lista „Chcę odwiedzić”">
-      {member.display_name}
-    </Link>
-  );
+  return <Link to={`/members/${member.id}`}>{member.display_name}</Link>;
 }

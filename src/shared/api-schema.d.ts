@@ -244,6 +244,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/members': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Everyone in the network
+     * @description All members except deleted accounts, most recently active first — the network is small, so the list is not paged. taste match = 0.5 + (r / 2) · n / (n + 5), where r is the Pearson correlation of overall ratings on the n places both rated (at least 3; with no variation r is 1 when the ratings are identical, else 0). Few shared places pull it towards 0.5; `shared` is n.
+     */
+    get: operations['getMembers'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/places': {
     parameters: {
       query?: never;
@@ -618,7 +638,7 @@ export interface paths {
     };
     /**
      * My stats
-     * @description taste_match = Pearson correlation of overall ratings on places both rated (at least 3), mapped to 0–1 as (r + 1) / 2; with no variation it is 1 when the ratings are identical, else 0.5.
+     * @description taste match = 0.5 + (r / 2) · n / (n + 5), where r is the Pearson correlation of overall ratings on the n places both rated (at least 3; with no variation r is 1 when the ratings are identical, else 0). Few shared places pull it towards 0.5; `shared` is n.
      */
     get: operations['getStatsMe'];
     put?: never;
@@ -1346,6 +1366,8 @@ export interface components {
       taste_matches: {
         profile: components['schemas']['Profile'];
         match: number;
+        /** @description Places rated by both */
+        shared: number;
       }[];
       /** @description Places I added that got gold stars, most first */
       my_places_with_stars: {
@@ -1729,6 +1751,27 @@ export interface components {
       items: components['schemas']['Report'][];
       /** @description Pass as `offset` for the next page; null at the end */
       next_offset: number | null;
+    };
+    /** @description A row of the people list. */
+    MemberSummary: {
+      profile: components['schemas']['Profile'];
+      places_added: number;
+      ratings: number;
+      /** @description Wishlist items not yet visited */
+      wishlist_to_visit: number;
+      /**
+       * Format: date-time
+       * @description Latest place, rating, comment or wishlist item (else joining)
+       */
+      last_active_at: string;
+      /** @description Taste match with me (0–1); null for me and below 3 shared */
+      match: number | null;
+      /** @description Places rated by both; null for me */
+      shared: number | null;
+    };
+    MemberList: {
+      items: components['schemas']['MemberSummary'][];
+      total: number;
     };
   };
   responses: never;
@@ -2237,6 +2280,35 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['MyRatingList'];
+        };
+      };
+      /** @description Error */
+      '4XX': {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+    };
+  };
+  getMembers: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MemberList'];
         };
       };
       /** @description Error */

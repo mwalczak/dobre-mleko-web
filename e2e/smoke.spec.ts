@@ -153,6 +153,21 @@ test('discover, search, a place, stats and profile', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Kuba' })).toBeVisible();
 });
 
+test('the author of a place links to their profile', async ({ page }) => {
+  await signIn(page, 'kuba@example.com', '/?q=pawilon');
+  await page.locator('.place-card').first().click();
+  // Comment authors (and the author line under the description) link to the member's profile.
+  const author = page.locator('.comment:not(:has(.link-button)) .comment-body > p.label').first().getByRole('link');
+  const name = (await author.textContent())!;
+  await author.click();
+  await expect(page).toHaveURL(/\/members\/[^/]+$/);
+  await expect(page.getByRole('heading', { name, level: 1 })).toBeVisible();
+  await expect(page.getByText(/Dodane miejsca · \d+/)).toBeVisible();
+  await expect(page.locator('.place-card').first()).toBeVisible();
+  await page.getByRole('link', { name: /Chcę odwiedzić/ }).click();
+  await expect(page).toHaveURL(/\/members\/[^/]+\/wishlist$/);
+});
+
 test('rate a place with a photo', async ({ page }) => {
   await signIn(page, 'ola@example.com', '/?unrated_only=true');
   await page.locator('.place-card').first().click();

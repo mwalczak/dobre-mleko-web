@@ -10,6 +10,7 @@ import { createQueryClient } from '../shared/query';
 import { Shell } from './Shell';
 import { DeleteAccountPage } from './pages/DeleteAccountPage';
 import { DiscoverPage } from './pages/DiscoverPage';
+import { MemberPage } from './pages/MemberPage';
 import { MePage } from './pages/MePage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { PlacePage } from './pages/PlacePage';
@@ -40,6 +41,7 @@ const router = createBrowserRouter([
       { path: '/report', element: <ReportPage /> },
       { path: '/me', element: <MePage /> },
       { path: '/me/wishlist', element: <WishlistPage /> },
+      { path: '/members/:id', element: <MemberPage /> },
       { path: '/members/:id/wishlist', element: <WishlistPage /> },
       {
         path: '/wishlist/new',
