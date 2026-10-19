@@ -345,6 +345,43 @@ test('change a place card style', async ({ page }) => {
   await expect(art).toHaveCSS('background-color', 'rgb(28, 43, 79)');
 });
 
+test('edit a place: add and remove photos', async ({ page }, info) => {
+  await signIn(page, 'tomek@example.com');
+  await expect(page.locator('.place-card').first()).toBeVisible();
+  // A place Tomek added (and so rated, with his photos); another one for each project, as they run side by side.
+  const id = await page.evaluate(
+    async (index) => {
+      const headers = { authorization: `Bearer ${localStorage.getItem('dm-token')}` };
+      const me = await (await fetch('/api/me', { headers })).json();
+      const list = await (await fetch(`/api/places?added_by=${me.id}&sort=newest&limit=2`, { headers })).json();
+      return list.items[index].id as string;
+    },
+    info.project.name === 'phone' ? 1 : 0,
+  );
+  await page.goto(`/places/${id}/edit`);
+  const photos = page.getByRole('group', { name: 'Zdjęcia' }).locator('.photo-picker-item img');
+  await expect(photos.first()).toBeVisible();
+  const before = await photos.count();
+
+  await page
+    .getByRole('group', { name: 'Zdjęcia' })
+    .locator('input[type=file]')
+    .setInputFiles({
+      name: 'nowe.jpg',
+      mimeType: 'image/jpeg',
+      buffer: await jpeg(page),
+    });
+  await expect(page.getByText('Dodano zdjęcie.')).toBeVisible();
+  await expect(photos).toHaveCount(before + 1);
+
+  page.once('dialog', (d) => d.accept());
+  await page
+    .getByRole('button', { name: /^Usuń zdjęcie \d+$/ })
+    .last()
+    .click();
+  await expect(photos).toHaveCount(before);
+});
+
 test('the map shows places', async ({ page }) => {
   await signIn(page, 'kuba@example.com');
   await page.getByRole('link', { name: 'Mapa' }).click();

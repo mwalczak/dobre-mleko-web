@@ -12,6 +12,7 @@ import { CardStyleFields } from '../components/CardStyleFields';
 import { LocationFieldset, usePinAddress } from '../components/LocationPicker';
 import { MapsLinkImport } from '../components/MapsLinkImport';
 import { PhotoPicker, type Uploaded } from '../components/PhotoPicker';
+import { PlacePhotosField } from '../components/PlacePhotosField';
 import { EMPTY_SCORES, RatingInput, scoresComplete, type ScoresDraft } from '../components/RatingInput';
 import { TagInput } from '../components/TagInput';
 import { VisitDateField } from '../components/VisitDateField';
@@ -257,6 +258,7 @@ function EditPlace({ p }: { p: PlaceDetail }) {
         <h1 className="display">{p.name}</h1>
       </header>
       <PlaceFields draft={draft} onChange={setDraft} />
+      <PlacePhotosField place={p} />
       <CardStyleFields
         value={draft.style}
         onChange={(style) => setDraft({ ...draft, style })}
