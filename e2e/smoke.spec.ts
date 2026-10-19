@@ -479,8 +479,10 @@ test('the map shows the wishlist layer', async ({ page }) => {
   const layer = page.getByRole('button', { name: /Chcę odwiedzić/ });
   await layer.click();
   await expect(layer).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.locator('.map-marker-wish').first()).toBeVisible({ timeout: 15_000 });
-  await page.locator('.map-marker-wish').first().click();
+  const marker = page.locator('.map-marker-wish').first();
+  await expect(marker).toBeVisible({ timeout: 15_000 });
+  // Markers are buttons; Enter opens one even when it sits under the map's zoom buttons (a click would hit those).
+  await marker.press('Enter');
   await expect(page).toHaveURL(/\/wishlist\/[0-9a-f-]+$/);
   await expect(page.getByText(/Lista: |Twoja lista/)).toBeVisible();
 
