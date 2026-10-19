@@ -479,7 +479,7 @@ export interface paths {
     head?: never;
     /**
      * Change my wishlist item
-     * @description Only the fields given change. `visited_on` marks it visited (a date, not in the future) or not (null); `place_id` links the regular place it was added as. 403 for someone else's item.
+     * @description Only the fields given change. `visited_on` marks it visited (a date, not in the future nor more than a year ago) or not (null); `place_id` links the regular place it was added as. 403 for someone else's item.
      */
     patch: operations['patchMeWishlistById'];
     trace?: never;
@@ -1424,6 +1424,11 @@ export interface components {
       max_photo_bytes: number;
       max_photos_per_rating: number;
       time_zone: string;
+      /**
+       * Format: date
+       * @description Visit dates (`visited_on`) can be from this day (a year ago, in time_zone) to today
+       */
+      oldest_visit_date: string;
       /** @description For Google sign-in on the web (web app and admin dashboard) */
       google_web_client_id: string | null;
       /** @description Whether POST /auth/dev is available (never in production) */
@@ -2481,7 +2486,7 @@ export interface operations {
             value?: number | null;
             /**
              * Format: date
-             * @description When I was there: YYYY-MM-DD, not in the future; null clears it, left out keeps it
+             * @description When I was there: YYYY-MM-DD, from `oldest_visit_date` in /meta (a year ago) to today; null clears it, left out keeps it
              */
             visited_on?: string | null;
           };
@@ -2775,7 +2780,7 @@ export interface operations {
           value?: number | null;
           /**
            * Format: date
-           * @description When I was there: YYYY-MM-DD, not in the future; null clears it, left out keeps it
+           * @description When I was there: YYYY-MM-DD, from `oldest_visit_date` in /meta (a year ago) to today; null clears it, left out keeps it
            */
           visited_on?: string | null;
           /**

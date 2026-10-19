@@ -1,21 +1,54 @@
-import { useId } from 'react';
-import { today } from '../../shared/format';
+import { useId, useState } from 'react';
+import { DateCalendar, longDay, useVisitRange } from './DateCalendar';
 
-/** "Kiedy byłeś?": an optional visit date ('YYYY-MM-DD' or ''), never in the future. Only the author sees it. */
+/**
+ * "Kiedy byłeś?": an optional visit date ('YYYY-MM-DD' or ''), from a year ago to today. Only the author sees it.
+ * Our own calendar instead of the browser's date picker (DM-26, DM-27).
+ */
 export function VisitDateField({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   const id = useId();
+  const range = useVisitRange();
+  const [open, setOpen] = useState(false);
   return (
     <div className="field visit-date">
-      <label htmlFor={id}>Kiedy byłeś?</label>
+      <span className="field-label" id={id}>
+        Kiedy byłeś?
+      </span>
       <div className="row">
-        <input id={id} type="date" max={today()} value={value} onChange={(e) => onChange(e.target.value)} />
+        <button
+          type="button"
+          className="btn btn-secondary btn-small"
+          aria-describedby={id}
+          aria-expanded={open}
+          onClick={() => setOpen(!open)}
+        >
+          {value ? longDay(value) : 'Wybierz datę'}
+        </button>
         {value && (
-          <button type="button" className="link-button" onClick={() => onChange('')}>
+          <button
+            type="button"
+            className="link-button"
+            onClick={() => {
+              onChange('');
+              setOpen(false);
+            }}
+          >
             Wyczyść
           </button>
         )}
       </div>
-      <span className="data muted">Nieobowiązkowe. Widzisz ją tylko Ty.</span>
+      {open && (
+        <DateCalendar
+          value={value}
+          label="Kiedy byłeś?"
+          {...range}
+          onChange={(date) => {
+            onChange(date);
+            setOpen(false);
+          }}
+        />
+      )}
+      <span className="data muted">Nieobowiązkowe, najwyżej rok wstecz. Widzisz ją tylko Ty.</span>
     </div>
   );
 }

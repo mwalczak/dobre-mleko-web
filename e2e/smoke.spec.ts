@@ -182,12 +182,36 @@ test('rate a place with a photo', async ({ page }) => {
     .locator('input[type=file]')
     .setInputFiles({ name: 'p.jpg', mimeType: 'image/jpeg', buffer: await jpeg(page) });
   await expect(page.locator('.photo-picker-item img')).toHaveCount(1);
-  await page.getByLabel('Kiedy byłeś?').fill('2026-10-12');
+  await page.getByRole('button', { name: 'Wybierz datę' }).click();
+  await page.getByRole('button', { name: '12 października 2026' }).click();
   await page.getByRole('button', { name: 'Zapisz ocenę' }).click();
 
   await expect(page.locator('.place-name')).toHaveText(name!);
   await expect(page.getByRole('link', { name: 'Zmień ocenę' })).toBeVisible();
   await expect(page.getByText('Byłem/am 12 PAŹ 2026')).toBeVisible();
+});
+
+test('visit dates go back a year at most, in a calendar of days', async ({ page }) => {
+  await signIn(page, 'ola@example.com', '/add');
+  await page.getByRole('button', { name: 'Wybierz datę' }).click();
+  const calendar = page.getByRole('group', { name: 'Kiedy byłeś?' });
+  const back = calendar.getByRole('button', { name: 'Poprzedni miesiąc' });
+  await expect(calendar.getByRole('button', { name: 'Następny miesiąc' })).toBeDisabled();
+  for (let i = 0; i < 12; i++) await back.click();
+  await expect(back).toBeDisabled();
+
+  // The oldest day allowed is the same day a year ago.
+  const label = (d: Date) =>
+    new Intl.DateTimeFormat('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' }).format(d);
+  const now = new Date();
+  const oldest = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+  await expect(calendar.getByRole('button', { name: label(oldest), exact: true })).toBeEnabled();
+  if (oldest.getDate() > 1) {
+    const before = new Date(oldest.getFullYear(), oldest.getMonth(), oldest.getDate() - 1);
+    await expect(calendar.getByRole('button', { name: label(before), exact: true })).toBeDisabled();
+  }
+  await calendar.getByRole('button', { name: label(oldest), exact: true }).click();
+  await expect(page.getByRole('button', { name: label(oldest), exact: true })).toBeVisible();
 });
 
 test('add a place with rating, photo and map pin', async ({ page }) => {
@@ -412,7 +436,7 @@ test('wishlist: add a place to visit, mark it visited, then add it as a place', 
     'https://example.com/relaks',
   );
   await page.getByRole('button', { name: 'Odwiedzone', exact: true }).click();
-  await page.getByLabel('Kiedy byłeś?').fill('2026-10-12');
+  await page.getByRole('button', { name: '12 października 2026' }).click();
   await page.getByRole('button', { name: 'Zapisz', exact: true }).click();
   await expect(page.locator('.wish-visited')).toHaveText('Odwiedzone 12 PAŹ 2026');
 
@@ -425,7 +449,7 @@ test('wishlist: add a place to visit, mark it visited, then add it as a place', 
   await page.getByRole('link', { name: 'Dodaj jako miejsce' }).click();
   await expect(page.getByLabel('Nazwa')).toHaveValue(name);
   await expect(page.getByLabel('Adres', { exact: true })).toHaveValue('Złota 8, Warszawa');
-  await expect(page.getByLabel('Kiedy byłeś?')).toHaveValue('2026-10-12');
+  await expect(page.getByRole('button', { name: '12 października 2026' })).toBeVisible();
   await expect(page.getByText('52.23030, 21.00710')).toBeVisible();
 
   // Back on the item: not visited after all, then removed.

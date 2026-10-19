@@ -5,6 +5,7 @@ import { api, unwrap } from '../../shared/api';
 import { Avatar } from '../../shared/components/Avatar';
 import { useToast } from '../../shared/components/Toast';
 import { day, distance as formatDistance, today } from '../../shared/format';
+import { DateCalendar, useVisitRange } from '../components/DateCalendar';
 import { MapView } from '../components/MapView';
 import { WishRing } from '../components/WishRing';
 import { useGeo } from '../geo';
@@ -95,6 +96,7 @@ function OwnerActions({ w, nav }: { w: WishlistItem; nav: string }) {
   const client = useQueryClient();
   const [picking, setPicking] = useState(false);
   const [date, setDate] = useState(w.visited_on ?? today());
+  const range = useVisitRange();
   const path = { params: { path: { id: w.id } } };
 
   const visit = useMutation({
@@ -184,15 +186,8 @@ function OwnerActions({ w, nav }: { w: WishlistItem; nav: string }) {
           }}
         >
           <div className="field">
-            <label htmlFor="wish-visited-on">Kiedy byłeś?</label>
-            <input
-              id="wish-visited-on"
-              type="date"
-              required
-              max={today()}
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-            />
+            <span className="field-label">Kiedy byłeś?</span>
+            <DateCalendar value={date} onChange={setDate} label="Kiedy byłeś?" {...range} />
           </div>
           <div className="row">
             <button type="submit" className="btn btn-primary btn-small" disabled={!date || visit.isPending}>

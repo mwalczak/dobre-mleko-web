@@ -1462,8 +1462,89 @@ input[type='range'] {
   margin-top: var(--space-4);
 }
 
-.visit-date input {
-  width: auto;
+.field-label {
+  font: 500 12px/1.4 var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Calendar (visit dates): a month of days, no separate year picker ----------------------------------- */
+.calendar {
+  max-width: 340px;
+  border: var(--line-2);
+  background: var(--surface);
+  padding: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.calendar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+}
+
+.calendar-title {
+  font: 600 16px/1.2 var(--sans);
+  text-transform: capitalize;
+}
+
+.calendar-nav {
+  width: 40px;
+  height: 40px;
+  border: var(--line-2);
+  background: var(--paper);
+  color: var(--ink);
+  font: 600 20px/1 var(--sans);
+  cursor: pointer;
+}
+
+.calendar-nav:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.calendar-weekday {
+  text-align: center;
+  font: 500 11px/2 var(--mono);
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.calendar-day {
+  aspect-ratio: 1;
+  min-height: 36px;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: 500 15px/1 var(--sans);
+  cursor: pointer;
+}
+
+.calendar-day:hover:not(:disabled) {
+  background: var(--paper);
+}
+
+.calendar-day[aria-current='date'] {
+  outline: var(--line-2);
+  outline-offset: -2px;
+}
+
+.calendar-day[aria-pressed='true'] {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.calendar-day:disabled {
+  color: var(--muted);
+  opacity: 0.35;
+  cursor: default;
 }
 
 .my-rating-name {
