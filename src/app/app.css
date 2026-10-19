@@ -205,6 +205,17 @@
   position: relative;
 }
 
+.welcome-about {
+  max-width: 32em;
+  font: 400 18px/1.4 var(--sans);
+}
+
+.about-en {
+  margin-top: var(--space-7);
+  padding-top: var(--space-4);
+  border-top: var(--line-1);
+}
+
 .welcome-links {
   margin-top: auto;
 }

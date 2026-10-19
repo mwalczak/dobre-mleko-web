@@ -8,6 +8,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { ToastProvider } from '../shared/components/Toast';
 import { createQueryClient } from '../shared/query';
 import { Shell } from './Shell';
+import { AboutPage } from './pages/AboutPage';
 import { DeleteAccountPage } from './pages/DeleteAccountPage';
 import { DiscoverPage } from './pages/DiscoverPage';
 import { MemberPage } from './pages/MemberPage';
@@ -22,6 +23,7 @@ import { WishlistPage } from './pages/WishlistPage';
 
 const router = createBrowserRouter([
   // Public, without signing in (linked from the App Store and Google Play).
+  { path: '/o-aplikacji', element: <AboutPage /> },
   { path: '/privacy', element: <PrivacyPage /> },
   { path: '/usun-konto', element: <DeleteAccountPage /> },
   {
