@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { api, unwrap } from '../../shared/api';
 import { Avatar } from '../../shared/components/Avatar';
-import { plural } from '../../shared/format';
+import { plural, rating } from '../../shared/format';
 import { useMe } from '../../shared/session';
 import { PlaceCard } from '../components/PlaceCard';
 import { WishRing } from '../components/WishRing';
@@ -11,19 +11,29 @@ import { WishRing } from '../components/WishRing';
 export function MemberPage() {
   const { id } = useParams();
   const me = useMe().data;
-  // The network is small: GET /members lists everyone, there is no GET /members/:id.
-  const members = useQuery({ queryKey: ['members'], queryFn: () => unwrap(api.GET('/members')) });
+  const path = { params: { path: { id: id ?? '' } } };
+  const own = !!id && id === me?.id;
+  const one = useQuery({
+    queryKey: ['members', id],
+    queryFn: () => unwrap(api.GET('/members/{id}', path)),
+    enabled: !!id && !own,
+  });
+  const ratings = useQuery({
+    queryKey: ['members', id, 'ratings'],
+    queryFn: () => unwrap(api.GET('/members/{id}/ratings', { params: { ...path.params, query: { limit: 100 } } })),
+    enabled: !!id && !own,
+  });
   const added = useQuery({
     queryKey: ['places', 'added-by', id],
     queryFn: () =>
       unwrap(
         api.GET('/places', { params: { query: { added_by: id, include_closed: 'true', sort: 'newest', limit: 100 } } }),
       ),
-    enabled: !!id && id !== me?.id,
+    enabled: !!id && !own,
   });
-  if (id && id === me?.id) return <Navigate to="/me" replace />;
-  if (members.isLoading) return <p className="page label">Ładowanie…</p>;
-  const member = members.data?.items.find((m) => m.profile.id === id);
+  if (own) return <Navigate to="/me" replace />;
+  if (one.isLoading) return <p className="page label">Ładowanie…</p>;
+  const member = one.data;
   if (!member)
     return (
       <div className="page narrow">
@@ -61,6 +71,23 @@ export function MemberPage() {
           </span>
         </Link>
       </div>
+      <section className="place-section">
+        <h2 className="label">Oceny · {member.ratings}</h2>
+        {!ratings.data ? (
+          <p className="label">Ładowanie…</p>
+        ) : !ratings.data.items.length ? (
+          <p className="muted">{name} nie ocenił(a) jeszcze żadnego miejsca.</p>
+        ) : (
+          <ul className="my-ratings panel">
+            {ratings.data.items.map((r) => (
+              <li key={r.place.id}>
+                <Link to={`/places/${r.place.id}`}>{r.place.name}</Link>
+                <span className="numeral small">{rating(r.overall)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
       <section className="place-section">
         <h2 className="label">Dodane miejsca · {member.places_added}</h2>
         {!added.data ? (

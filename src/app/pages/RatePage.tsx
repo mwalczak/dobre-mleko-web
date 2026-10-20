@@ -28,6 +28,7 @@ function Rate({ p }: { p: PlaceDetail }) {
   const [scores, setScores] = useState<ScoresDraft>(p.my_scores ?? EMPTY_SCORES);
   const [photos, setPhotos] = useState<Uploaded[]>([]);
   const [visitedOn, setVisitedOn] = useState(p.my_visited_on ?? '');
+  const [why, setWhy] = useState('');
   const myPhotos = p.photos.filter((ph) => ph.uploaded_by === me?.id);
   const max = (meta?.max_photos_per_rating ?? 6) - myPhotos.length;
   const hasPhoto = myPhotos.length + photos.length > 0;
@@ -42,8 +43,8 @@ function Rate({ p }: { p: PlaceDetail }) {
     navigate(`/places/${p.id}`);
   };
   const save = useMutation({
-    mutationFn: () =>
-      unwrap(
+    mutationFn: async () => {
+      const saved = await unwrap(
         api.PUT('/places/{id}/rating', {
           ...path,
           body: {
@@ -55,7 +56,11 @@ function Rate({ p }: { p: PlaceDetail }) {
             photo_ids: photos.map((x) => x.id),
           },
         }),
-      ),
+      );
+      // DM-8: "Dlaczego warto" from someone who did not add the place goes to the comments, next to their rating.
+      if (why.trim()) await unwrap(api.POST('/places/{id}/comments', { ...path, body: { body: why.trim() } }));
+      return saved;
+    },
     onSuccess: () => done('Zapisano ocenę.'),
     onError: toast.fail,
   });
@@ -85,6 +90,11 @@ function Rate({ p }: { p: PlaceDetail }) {
 
       <RatingInput value={scores} onChange={setScores} />
       <VisitDateField value={visitedOn} onChange={setVisitedOn} />
+      <div className="field">
+        <label htmlFor="rate-why">Dlaczego warto?</label>
+        <textarea id="rate-why" rows={3} maxLength={1000} value={why} onChange={(e) => setWhy(e.target.value)} />
+        <span className="data muted">Nieobowiązkowe. Pojawi się w komentarzach razem z Twoją oceną.</span>
+      </div>
 
       <section className="place-section">
         <h2 className="label">Zdjęcia</h2>

@@ -166,13 +166,15 @@ test('the author of a place links to their profile', async ({ page }) => {
   await author.click();
   await expect(page).toHaveURL(/\/members\/[^/]+$/);
   await expect(page.getByRole('heading', { name, level: 1 })).toBeVisible();
+  await expect(page.getByText(/Oceny · [1-9]/)).toBeVisible();
+  await expect(page.locator('.my-ratings li').first()).toBeVisible();
   await expect(page.getByText(/Dodane miejsca · \d+/)).toBeVisible();
   await expect(page.locator('.place-card').first()).toBeVisible();
   await page.getByRole('link', { name: /Chcę odwiedzić/ }).click();
   await expect(page).toHaveURL(/\/members\/[^/]+\/wishlist$/);
 });
 
-test('rate a place with a photo', async ({ page }) => {
+test('rate a place with a photo', async ({ page }, info) => {
   await signIn(page, 'ola@example.com', '/?unrated_only=true');
   await page.locator('.place-card').first().click();
   const name = await page.locator('.place-name').textContent();
@@ -188,9 +190,13 @@ test('rate a place with a photo', async ({ page }) => {
   await expect(page.locator('.photo-picker-item img')).toHaveCount(1);
   await page.getByRole('button', { name: 'Wybierz datę' }).click();
   await page.getByRole('button', { name: '12 października 2026' }).click();
+  const why = `Najlepsza szarlotka w okolicy (${info.project.name}).`;
+  await page.getByLabel('Dlaczego warto?').fill(why);
   await page.getByRole('button', { name: 'Zapisz ocenę' }).click();
 
   await expect(page.locator('.place-name')).toHaveText(name!);
+  // "Dlaczego warto" lands in the comments, with the rating.
+  await expect(page.locator('.comment', { hasText: why }).last()).toContainText('ocena');
   await expect(page.getByRole('link', { name: 'Zmień ocenę' })).toBeVisible();
   await expect(page.getByText('Byłem/am 12 PAŹ 2026')).toBeVisible();
 });

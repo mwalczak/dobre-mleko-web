@@ -264,6 +264,46 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/members/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * One member
+     * @description As in GET /members, also for someone who has not added any place. 404 for unknown or deleted accounts. taste match = 0.5 + (r / 2) · n / (n + 5), where r is the Pearson correlation of overall ratings on the n places both rated (at least 3; with no variation r is 1 when the ratings are identical, else 0). Few shared places pull it towards 0.5; `shared` is n.
+     */
+    get: operations['getMembersById'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/members/{id}/ratings': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * A member's ratings
+     * @description Places the member rated with their scores, latest first. Visit dates are private and left out. 404 for unknown or deleted accounts.
+     */
+    get: operations['getMembersByIdRatings'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/places': {
     parameters: {
       query?: never;
@@ -1774,6 +1814,25 @@ export interface components {
       /** @description Places rated by both; null for me */
       shared: number | null;
     };
+    /** @description A member's ratings (their visit dates stay private). */
+    MemberRatingList: {
+      items: {
+        place: {
+          /** Format: uuid */
+          id: string;
+          name: string;
+          /** @description A category id; `category_details` in GET /meta describes it */
+          category_id: string;
+        };
+        scores: components['schemas']['Scores'];
+        overall: number;
+        /** Format: date-time */
+        updated_at: string;
+      }[];
+      /** @description Pass as `cursor` for the next page; null at the end */
+      next_cursor: string | null;
+      total: number;
+    };
     MemberList: {
       items: components['schemas']['MemberSummary'][];
       total: number;
@@ -2314,6 +2373,72 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['MemberList'];
+        };
+      };
+      /** @description Error */
+      '4XX': {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+    };
+  };
+  getMembersById: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MemberSummary'];
+        };
+      };
+      /** @description Error */
+      '4XX': {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+    };
+  };
+  getMembersByIdRatings: {
+    parameters: {
+      query?: {
+        limit?: number;
+        /** @description `next_cursor` from the previous page */
+        cursor?: string;
+      };
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MemberRatingList'];
         };
       };
       /** @description Error */
