@@ -1698,6 +1698,10 @@ input[type='range'] {
   margin-top: var(--space-6, 32px);
 }
 
+.privacy h3 {
+  margin: var(--space-4) 0 var(--space-2);
+}
+
 .privacy ul,
 .privacy ol {
   padding-left: 1.2em;

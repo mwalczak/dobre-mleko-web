@@ -96,6 +96,11 @@ test('signed out: privacy policy and account deletion pages', async ({ page }) =
   await page.getByRole('link', { name: 'O aplikacji' }).click();
   await expect(page.getByRole('heading', { name: 'O aplikacji', level: 1 })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'About Dobre Mleko (in English)' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Dobre Mleko w Google Play' })).toHaveAttribute(
+    'href',
+    'https://play.google.com/store/apps/details?id=app.dobremleko',
+  );
+  await expect(page.getByRole('heading', { name: 'iPhone — TestFlight' })).toBeVisible();
   await page.goto('/');
   await page.getByRole('link', { name: 'Usuń konto' }).click();
   await expect(page.getByRole('heading', { name: 'Usuń konto', level: 1 })).toBeVisible();

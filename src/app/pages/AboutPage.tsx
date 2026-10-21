@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import { Brand } from '../../shared/components/Brand';
 
+const PLAY_URL = 'https://play.google.com/store/apps/details?id=app.dobremleko';
+
 /** O aplikacji (publiczna, bez logowania): czym jest Dobre Mleko — dla gości, recenzentów sklepów i programów. */
 export function AboutPage() {
   return (
@@ -51,6 +53,40 @@ export function AboutPage() {
         samego konta i tych samych danych. Aplikacja jest w fazie testów z pierwszą grupą użytkowników.
       </p>
 
+      <h2 className="title">Jak zainstalować (w czasie testów)</h2>
+      <p>
+        Najpierw napisz na <a href="mailto:kontakt@dobre-mleko.app">kontakt@dobre-mleko.app</a> — dodamy Cię do listy
+        zaproszonych i do testerów. Podaj adres, którym logujesz się w Google (Android) albo Apple ID (iPhone).
+      </p>
+      <h3 className="label">Android — Google Play</h3>
+      <ol>
+        <li>Na telefonie zaloguj się w Sklepie Play kontem Google, które nam podałeś.</li>
+        <li>
+          Otwórz{' '}
+          <a href={PLAY_URL} target="_blank" rel="noreferrer">
+            Dobre Mleko w Google Play
+          </a>{' '}
+          i stuknij <strong>Zainstaluj</strong>. Jeśli Sklep Play pisze, że aplikacja jest niedostępna, Twoje konto nie
+          jest jeszcze na liście testerów — daj nam znać.
+        </li>
+        <li>Aktualizacje przychodzą jak w każdej aplikacji ze Sklepu Play.</li>
+      </ol>
+      <h3 className="label">iPhone — TestFlight</h3>
+      <ol>
+        <li>
+          Zainstaluj z App Store aplikację <strong>TestFlight</strong> (od Apple, bezpłatna).
+        </li>
+        <li>
+          Otwórz na iPhonie zaproszenie, które dostaniesz e-mailem od TestFlight, i stuknij <strong>Akceptuj</strong>, a
+          potem <strong>Zainstaluj</strong>.
+        </li>
+        <li>Nowe wersje pojawiają się w TestFlight — tam też je aktualizujesz.</li>
+      </ol>
+      <p>
+        Po instalacji zaloguj się kontem Google (albo Apple na iPhonie) z tym samym adresem, który jest na liście. Bez
+        instalacji możesz też korzystać z wersji w przeglądarce na <Link to="/">dobre-mleko.app</Link>.
+      </p>
+
       <h2 className="title">Kontakt</h2>
       <p>
         <a href="mailto:kontakt@dobre-mleko.app">kontakt@dobre-mleko.app</a>
@@ -68,8 +104,13 @@ export function AboutPage() {
         <p>
           It is available as native iOS (Swift) and Android (Kotlin) apps and as a web app at dobre-mleko.app, all
           backed by one TypeScript API with PostgreSQL/PostGIS. The product is in beta testing with its first users in
-          Rybnik, Poland; during the tests access is invite-only, and it will open more widely afterwards. No ads, no
-          tracking. Contact: <a href="mailto:kontakt@dobre-mleko.app">kontakt@dobre-mleko.app</a>.
+          Rybnik, Poland; during the tests access is invite-only, and it will open more widely afterwards. To join the
+          beta, e-mail us; Android testers install it from{' '}
+          <a href={PLAY_URL} target="_blank" rel="noreferrer">
+            Google Play
+          </a>
+          , iPhone testers through TestFlight. No ads, no tracking. Contact:{' '}
+          <a href="mailto:kontakt@dobre-mleko.app">kontakt@dobre-mleko.app</a>.
         </p>
       </section>
     </div>
