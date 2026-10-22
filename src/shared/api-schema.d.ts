@@ -609,6 +609,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/places/{id}/photos/order': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /**
+     * Reorder the photos of a place
+     * @description The person who added the place, or an admin. `photo_ids` lists all photos of the place in the new order; the first one is the cover. Photos attached later are added at the end.
+     */
+    put: operations['putPlacesByIdPhotosOrder'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/files/{hash}': {
     parameters: {
       query?: never;
@@ -3478,6 +3498,41 @@ export interface operations {
       cookie?: never;
     };
     requestBody?: never;
+    responses: {
+      /** @description Done, no content */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Error */
+      '4XX': {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+    };
+  };
+  putPlacesByIdPhotosOrder: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': {
+          photo_ids: string[];
+        };
+      };
+    };
     responses: {
       /** @description Done, no content */
       204: {

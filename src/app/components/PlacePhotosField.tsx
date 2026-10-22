@@ -8,7 +8,8 @@ import { useMe, useMeta } from '../../shared/session';
 /**
  * Photos while editing a place (DM-13). Changes apply right away, not with "Zapisz": a photo is removed with
  * DELETE /photos/:id (its uploader or an admin; a rating keeps at least one), and added to my own rating of the place
- * (POST /photos, then PUT /places/:id/rating with my scores unchanged) — so adding needs my rating.
+ * (POST /photos, then PUT /places/:id/rating with my scores unchanged) — so adding needs my rating. The place's author
+ * or an admin reorders the photos (drag, or the arrows) with PUT /places/:id/photos/order; the first one is the cover.
  */
 export function PlacePhotosField({ place }: { place: PlaceDetail }) {
   const me = useMe().data;
@@ -17,6 +18,7 @@ export function PlacePhotosField({ place }: { place: PlaceDetail }) {
   const client = useQueryClient();
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(0);
+  const [dragged, setDragged] = useState<number | null>(null);
   const refresh = () =>
     Promise.all([
       client.invalidateQueries({ queryKey: ['place', place.id] }),
@@ -27,6 +29,25 @@ export function PlacePhotosField({ place }: { place: PlaceDetail }) {
   const max = meta?.max_photos_per_rating ?? 6;
   const scores = place.my_scores;
   const left = scores ? max - mine : 0;
+
+  const canOrder = place.is_mine || !!me?.is_admin;
+  const reorder = useMutation({
+    mutationFn: (ids: string[]) =>
+      unwrap(api.PUT('/places/{id}/photos/order', { params: { path: { id: place.id } }, body: { photo_ids: ids } })),
+    onSuccess: refresh,
+    onError: toast.fail,
+  });
+  // The new order shows right away, before the place is reloaded.
+  const photos = reorder.isPending
+    ? reorder.variables.map((id) => place.photos.find((x) => x.id === id)!).filter(Boolean)
+    : place.photos;
+
+  function move(from: number, to: number) {
+    if (from === to || to < 0 || to >= photos.length || reorder.isPending) return;
+    const ids = photos.map((x) => x.id);
+    ids.splice(to, 0, ...ids.splice(from, 1));
+    reorder.mutate(ids);
+  }
 
   const remove = useMutation({
     mutationFn: (id: string) => unwrap(api.DELETE('/photos/{id}', { params: { path: { id } } })),
@@ -71,9 +92,44 @@ export function PlacePhotosField({ place }: { place: PlaceDetail }) {
       <legend className="label">Zdjęcia</legend>
       <div className="photo-picker">
         <div className="photo-picker-grid">
-          {place.photos.map((x, i) => (
-            <div key={x.id} className="photo-picker-item">
-              <img src={x.thumb_url} alt={`Zdjęcie ${i + 1}`} />
+          {photos.map((x, i) => (
+            <div
+              key={x.id}
+              className={`photo-picker-item${dragged === i ? ' dragging' : ''}`}
+              draggable={canOrder && photos.length > 1}
+              onDragStart={() => setDragged(i)}
+              onDragEnd={() => setDragged(null)}
+              onDragOver={(e) => dragged !== null && e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                if (dragged !== null) move(dragged, i);
+                setDragged(null);
+              }}
+            >
+              <img src={x.thumb_url} alt={`Zdjęcie ${i + 1}`} draggable={false} />
+              {i === 0 && photos.length > 1 && <span className="photo-cover label">Okładka</span>}
+              {canOrder && photos.length > 1 && (
+                <span className="photo-move">
+                  <button
+                    type="button"
+                    className="btn btn-small"
+                    aria-label={`Przesuń zdjęcie ${i + 1} wcześniej`}
+                    disabled={i === 0 || reorder.isPending}
+                    onClick={() => move(i, i - 1)}
+                  >
+                    ◀
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-small"
+                    aria-label={`Przesuń zdjęcie ${i + 1} dalej`}
+                    disabled={i === photos.length - 1 || reorder.isPending}
+                    onClick={() => move(i, i + 1)}
+                  >
+                    ▶
+                  </button>
+                </span>
+              )}
               {(x.uploaded_by === me?.id || me?.is_admin) && (
                 <button
                   type="button"
@@ -109,6 +165,7 @@ export function PlacePhotosField({ place }: { place: PlaceDetail }) {
         />
         <p className="data muted">
           Zmiany zdjęć zapisują się od razu.{' '}
+          {canOrder && photos.length > 1 && 'Przeciągnij zdjęcie, żeby zmienić kolejność — pierwsze to okładka. '}
           {scores
             ? `Twoja ocena ma ${mine} z ${max} zdjęć i musi mieć co najmniej jedno.`
             : 'Zdjęcia dodaje się razem z oceną — oceń miejsce, żeby dodać swoje.'}
