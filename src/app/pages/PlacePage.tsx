@@ -189,10 +189,12 @@ function Place({ p }: { p: PlaceDetail }) {
       {p.gold_star_awarders.length > 0 && (
         <section className="place-section">
           <h2 className="label">Gwiazdki dali</h2>
+          {/* Who gave a star: their badge, as on the profile (no badge: their name); "×2" for stars in two months. */}
           <div className="avatars">
-            {p.gold_star_awarders.map((a, i) => (
-              <span key={`${a.id}-${i}`} title={a.display_name}>
-                <Avatar name={a.display_name} url={a.avatar_url} size={36} ring={a.id === me?.id ? 'me' : undefined} />
+            {awarders(p.gold_star_awarders).map(({ who, stars }) => (
+              <span key={who.id} className="badge" title={who.display_name}>
+                {who.badge || who.display_name}
+                {stars > 1 && ` ×${stars}`}
               </span>
             ))}
           </div>
@@ -354,6 +356,17 @@ function CommentItem({ c, refresh }: { c: Comment; refresh: () => Promise<unknow
       </div>
     </li>
   );
+}
+
+/** Gold star givers, each once, with how many stars they gave (one per month), in the order given. */
+function awarders(list: Profile[]): { who: Profile; stars: number }[] {
+  const byId = new Map<string, { who: Profile; stars: number }>();
+  for (const who of list) {
+    const seen = byId.get(who.id);
+    if (seen) seen.stars += 1;
+    else byId.set(who.id, { who, stars: 1 });
+  }
+  return [...byId.values()];
 }
 
 /** A member's name, linking to their profile (S50). */
