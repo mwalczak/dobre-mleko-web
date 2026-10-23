@@ -217,16 +217,23 @@ function Mine() {
         )}
       </section>
 
-      {s.my_places_with_stars.length > 0 && (
-        <section className="place-section">
-          <h2 className="title">Moje miejsca z gwiazdkami</h2>
+      <section className="place-section">
+        <h2 className="title">Moje polecenia i ich gwiazdki</h2>
+        {/* Only my places that got gold stars: none — either I added nothing, or nothing got a star yet. */}
+        {s.my_places_with_stars.length > 0 ? (
           <div className="place-grid">
             {s.my_places_with_stars.map(({ place }) => (
               <PlaceCard key={place.id} place={place} compact />
             ))}
           </div>
-        </section>
-      )}
+        ) : (
+          <p className="muted">
+            {s.places_added > 0
+              ? 'Twoje miejsca nie dostały jeszcze Złotych Gwiazdek.'
+              : 'Nie dodałeś jeszcze żadnego miejsca.'}
+          </p>
+        )}
+      </section>
     </div>
   );
 }

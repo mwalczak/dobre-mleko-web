@@ -157,6 +157,7 @@ test('discover, search, a place, stats and profile', async ({ page }) => {
   await expect(page.getByText('Top 10')).toBeVisible();
   await page.getByRole('tab', { name: 'Ja' }).click();
   await expect(page.getByText('Podobny gust')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Moje polecenia i ich gwiazdki' })).toBeVisible();
 
   await page.getByRole('link', { name: 'Ja', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Kuba' })).toBeVisible();
