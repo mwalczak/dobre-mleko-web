@@ -18,7 +18,13 @@ const LOG_KEY = ['admin', 'push', 'log'];
 const PEOPLE: [string, string, string] = ['osoba', 'osoby', 'osób'];
 const DEVICES: [string, string, string] = ['urządzenie', 'urządzenia', 'urządzeń'];
 const NEW_PLACES = { all: 'wszystkie', favorites: 'z ulubionych kategorii', none: 'żadne' } as const;
-const KIND_LABEL = { new_place: 'Nowe miejsce', new_comment: 'Komentarz', admin: 'Wiadomość' } as const;
+const KIND_LABEL = {
+  new_place: 'Nowe miejsce',
+  new_comment: 'Komentarz',
+  gold_star: 'Złota Gwiazdka',
+  member_joined: 'Dołączenie',
+  admin: 'Wiadomość',
+} as const;
 
 /**
  * Push notifications: who gets them on which devices (and what they chose), a message to everyone, to chosen
@@ -124,6 +130,8 @@ function SubscriberRow({
       <td>
         <div className="data">Nowe miejsca: {NEW_PLACES[m.notifications.new_places]}</div>
         <div className="data">Komentarze: {m.notifications.comments ? 'tak' : 'nie'}</div>
+        <div className="data">Złote Gwiazdki: {m.notifications.gold_stars ? 'tak' : 'nie'}</div>
+        {m.profile.role === 'admin' && <div className="data">Dołączenia: {m.notifications.joins ? 'tak' : 'nie'}</div>}
         {m.profile.favorite_categories.length > 0 && (
           <div className="push-favorites">
             {m.profile.favorite_categories.map((c) => (

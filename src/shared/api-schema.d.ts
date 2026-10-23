@@ -157,7 +157,7 @@ export interface paths {
     put?: never;
     /**
      * Finish onboarding
-     * @description Sets the display name, badge (max 16 characters) and up to 3 favourite categories; `has_profile` becomes true.
+     * @description Sets the display name, badge (max 16 characters) and up to 3 favourite categories; `has_profile` becomes true. The first time, whoever put the e-mail on the list gets a push notification (`notifications.joins`).
      */
     post: operations['postMeProfile'];
     delete?: never;
@@ -409,7 +409,7 @@ export interface paths {
     put?: never;
     /**
      * Give a gold star
-     * @description "Musisz tam iść". Does not change the displayed average but adds to rank_score. `gold_stars_per_month` (see /meta) per person per calendar month (Europe/Warsaw), once per place per month. 409 `no_gold_stars_left`, `gold_star_already_awarded`.
+     * @description "Musisz tam iść". Does not change the displayed average but adds to rank_score. `gold_stars_per_month` (see /meta) per person per calendar month (Europe/Warsaw), once per place per month. 409 `no_gold_stars_left`, `gold_star_already_awarded`. The place's author gets a push notification (`notifications.gold_stars`).
      */
     post: operations['postPlacesByIdGoldStar'];
     /**
@@ -1024,7 +1024,7 @@ export interface paths {
     };
     /**
      * Reported issues
-     * @description Bugs, ideas and abuse reports members have filed, newest first, so they can check before filing the same thing again. Abuse reports are private and never listed, nor are types members cannot report (such as the admins’ todos), so a page may hold fewer than `limit`. `q` searches titles and descriptions, tolerating typos, and sorts by relevance. 503 `reports_unavailable` when the issue tracker cannot be reached.
+     * @description Bugs, ideas and abuse reports members have filed in the current milestone (searches with `q` cover all), newest first, so they can check before filing the same thing again. Abuse reports are private and never listed, nor are types members cannot report (such as the admins’ todos), so a page may hold fewer than `limit`. `q` searches titles and descriptions, tolerating typos, and sorts by relevance. 503 `reports_unavailable` when the issue tracker cannot be reached.
      */
     get: operations['getReports'];
     put?: never;
@@ -1102,6 +1102,10 @@ export interface components {
       new_places: 'all' | 'favorites' | 'none';
       /** @description Comments on places I added, commented on or saved */
       comments: boolean;
+      /** @description Someone gave a place I added a gold star */
+      gold_stars: boolean;
+      /** @description Someone whose e-mail I put on the list joined (finished onboarding) — in practice, for admins */
+      joins: boolean;
     };
     /** @description The signed-in member. */
     Me: {
@@ -1647,7 +1651,7 @@ export interface components {
       /** Format: date-time */
       created_at: string;
       /** @enum {string} */
-      kind: 'new_place' | 'new_comment' | 'admin';
+      kind: 'new_place' | 'new_comment' | 'gold_star' | 'member_joined' | 'admin';
       title: string;
       body: string;
       /** Format: uuid */
@@ -2149,6 +2153,10 @@ export interface operations {
             new_places?: 'all' | 'favorites' | 'none';
             /** @description Comments on places I added, commented on or saved */
             comments?: boolean;
+            /** @description Someone gave a place I added a gold star */
+            gold_stars?: boolean;
+            /** @description Someone whose e-mail I put on the list joined (finished onboarding) — in practice, for admins */
+            joins?: boolean;
           };
         };
       };
