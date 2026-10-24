@@ -17,6 +17,7 @@ import { NotFoundPage } from './pages/NotFoundPage';
 import { PlacePage } from './pages/PlacePage';
 import { PrivacyPage } from './pages/PrivacyPage';
 import { RatePage } from './pages/RatePage';
+import { SharePage } from './pages/SharePage';
 import { ReportPage } from './pages/ReportPage';
 import { StatsPage } from './pages/StatsPage';
 import { WishlistPage } from './pages/WishlistPage';
@@ -26,6 +27,8 @@ const router = createBrowserRouter([
   { path: '/o-aplikacji', element: <AboutPage /> },
   { path: '/privacy', element: <PrivacyPage /> },
   { path: '/usun-konto', element: <DeleteAccountPage /> },
+  // A shared place (DM-45): a preview for anyone with the link; members go on to the place.
+  { path: '/s/:token', element: <SharePage /> },
   {
     element: <Shell />,
     children: [

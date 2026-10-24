@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Brand } from '../../shared/components/Brand';
-
-const PLAY_URL = 'https://play.google.com/store/apps/details?id=app.dobremleko';
+import { PLAY_URL } from '../../shared/links';
 
 /** O aplikacji (publiczna, bez logowania): czym jest Dobre Mleko — dla gości, recenzentów sklepów i programów. */
 export function AboutPage() {
@@ -71,7 +70,9 @@ export function AboutPage() {
         </li>
         <li>Aktualizacje przychodzą jak w każdej aplikacji ze Sklepu Play.</li>
       </ol>
-      <h3 className="label">iPhone — TestFlight</h3>
+      <h3 className="label" id="iphone">
+        iPhone — TestFlight
+      </h3>
       <ol>
         <li>
           Zainstaluj z App Store aplikację <strong>TestFlight</strong> (od Apple, bezpłatna).

@@ -163,6 +163,43 @@ test('discover, search, a place, stats and profile', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Kuba' })).toBeVisible();
 });
 
+test('share a place: anyone with the link sees it and can ask to join', async ({ page, browser }, info) => {
+  await signIn(page, 'kuba@example.com', '/?q=pawilon');
+  await page.locator('.place-card').first().click();
+  await page.getByRole('button', { name: 'Udostępnij', exact: true }).click();
+  const panel = page.getByRole('region', { name: 'Udostępnij miejsce' });
+  const url = (await panel.locator('.share-panel-link').textContent())!;
+  expect(url).toMatch(/\/s\/[A-Za-z0-9_-]+$/);
+  await expect(panel.getByRole('link', { name: 'WhatsApp' })).toHaveAttribute('href', /wa\.me.*Polecam%20Ci/);
+
+  // A stranger: no session.
+  const stranger = await browser.newPage();
+  await stranger.goto(new URL(url).pathname);
+  await expect(stranger.getByText('Poleca Ci Kuba')).toBeVisible();
+  await expect(stranger.getByRole('heading', { name: /pawilon/i })).toBeVisible();
+  const email = `nowy-${info.project.name}-${Date.now()}@example.com`;
+  await stranger.getByLabel('Imię').fill('Nowy');
+  await stranger.getByLabel(/E-mail/).fill(email);
+  await stranger.getByRole('button', { name: 'Chcę dołączyć' }).click();
+  await expect(stranger.getByText('Gotowe — prośba wysłana')).toBeVisible();
+  await stranger.close();
+
+  // A member opening the link goes straight to the place.
+  await page.goto(new URL(url).pathname);
+  await expect(page.getByText('Ocena łączna')).toBeVisible();
+
+  // Admins see the request (dismissed here, so the list of people stays as seeded).
+  await page.getByRole('link', { name: 'Ja', exact: true }).click();
+  await page.evaluate(() => localStorage.clear());
+  await signIn(page, 'marta@example.com', '/admin/');
+  await page.getByRole('tab', { name: /Prośby/ }).click();
+  const row = page.getByRole('row').filter({ hasText: email });
+  await expect(row).toContainText('Poleca Kuba');
+  page.once('dialog', (d) => d.accept());
+  await row.getByRole('button', { name: 'Odrzuć' }).click();
+  await expect(row).toContainText('Odrzucono');
+});
+
 test('the author of a place links to their profile', async ({ page }) => {
   await signIn(page, 'kuba@example.com', '/?q=pawilon');
   await page.locator('.place-card').first().click();

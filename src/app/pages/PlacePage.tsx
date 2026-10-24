@@ -11,6 +11,7 @@ import { useToast } from '../../shared/components/Toast';
 import { ago, count, date, day, distance, PRICE, rating } from '../../shared/format';
 import { useMe } from '../../shared/session';
 import { ColumnBars, CriteriaBars } from '../components/Bars';
+import { SharePlace } from '../components/SharePlace';
 import { useGeo } from '../geo';
 
 export function usePlace(id: string) {
@@ -140,6 +141,7 @@ function Place({ p }: { p: PlaceDetail }) {
             Edytuj
           </Link>
         )}
+        <SharePlace place={p} />
       </div>
 
       {p.description && (

@@ -23,6 +23,7 @@ const KIND_LABEL = {
   new_comment: 'Komentarz',
   gold_star: 'Złota Gwiazdka',
   member_joined: 'Dołączenie',
+  join_request: 'Prośba o dołączenie',
   admin: 'Wiadomość',
 } as const;
 

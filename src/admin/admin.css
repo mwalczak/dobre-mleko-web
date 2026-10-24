@@ -535,3 +535,7 @@ table.people {
 .push-log p {
   margin: 4px 0;
 }
+
+.admin-subhead {
+  margin: var(--space-6, 32px) 0 var(--space-3);
+}

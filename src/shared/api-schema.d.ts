@@ -134,7 +134,7 @@ export interface paths {
     post?: never;
     /**
      * Delete my account
-     * @description Removes the personal data: e-mail, name, badge, avatar, Google/Apple ids, favourite categories, saved places, the wishlist, devices and the place on the access list. Places, ratings, photos and comments stay, shown as by "Były członek" (status `deleted`). Every session ends. Signing in again with the same e-mail starts a new account, once an admin puts it back on the list. ADMIN_EMAILS admins stay on the list.
+     * @description Removes the personal data: e-mail, name, badge, avatar, Google/Apple ids, favourite categories, saved places, the wishlist, shared links, devices and the place on the access list. Places, ratings, photos and comments stay, shown as by "Były członek" (status `deleted`). Every session ends. Signing in again with the same e-mail starts a new account, once an admin puts it back on the list. ADMIN_EMAILS admins stay on the list.
      */
     delete: operations['deleteMe'];
     options?: never;
@@ -1059,6 +1059,180 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/places/{id}/shares': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get my link to share a place
+     * @description The same link for the same member and place each time. Anyone with it sees a preview of this place (GET /shares/{token}) and can ask to join; the apps put it in the system share sheet with a short text.
+     */
+    post: operations['postPlacesByIdShares'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/shares/{token}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Preview of a shared place (public)
+     * @description No sign-in. 404 when the place is closed or gone, or the member who shared it left.
+     */
+    get: operations['getSharesByToken'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/shares/{token}/open': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Count an opened link (public)
+     * @description The web page calls it once per visit; link-preview bots do not, so it counts people.
+     */
+    post: operations['postSharesByTokenOpen'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/shares/{token}/cover': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** The shared place's cover image (public) */
+    get: operations['getSharesByTokenCover'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/shares/{token}/og': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Link preview page (public)
+     * @description A small HTML page with Open Graph tags. The web app's nginx sends link-preview bots (Messenger, WhatsApp, …) here for /s/{token}; people get the web app.
+     */
+    get: operations['getSharesByTokenOg'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/join-requests': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Ask to join (public)
+     * @description From a shared link's page: the e-mail of the Google or Apple account and a name. Admins get a push notification and put the e-mail on the list from the dashboard. An e-mail already on the list gets `allowed` (sign in); asking again while pending updates the request. 429 `too_many_requests` when 200 requests are already waiting.
+     */
+    post: operations['postJoinRequests'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/join-requests': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Join requests and sharing per member */
+    get: operations['getAdminJoinRequests'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/join-requests/{id}/accept': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Accept a join request
+     * @description Puts the e-mail on the list (as a member, added by me) — they can sign in right away. 409 `already_handled`.
+     */
+    post: operations['postAdminJoinRequestsByIdAccept'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/join-requests/{id}/dismiss': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Dismiss a join request
+     * @description 409 `already_handled`.
+     */
+    post: operations['postAdminJoinRequestsByIdDismiss'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1104,7 +1278,7 @@ export interface components {
       comments: boolean;
       /** @description Someone gave a place I added a gold star */
       gold_stars: boolean;
-      /** @description Someone whose e-mail I put on the list joined (finished onboarding) — in practice, for admins */
+      /** @description Someone joined (finished onboarding) whom I put on the list or who asked to join from my shared link; for admins also new join requests */
       joins: boolean;
     };
     /** @description The signed-in member. */
@@ -1651,7 +1825,7 @@ export interface components {
       /** Format: date-time */
       created_at: string;
       /** @enum {string} */
-      kind: 'new_place' | 'new_comment' | 'gold_star' | 'member_joined' | 'admin';
+      kind: 'new_place' | 'new_comment' | 'gold_star' | 'member_joined' | 'join_request' | 'admin';
       title: string;
       body: string;
       /** Format: uuid */
@@ -1860,6 +2034,87 @@ export interface components {
     MemberList: {
       items: components['schemas']['MemberSummary'][];
       total: number;
+    };
+    /** @description A member's link to a place, the same one each time. */
+    PlaceShare: {
+      token: string;
+      /** @description The link to send: the web app's /s/<token> page (with a link preview) */
+      url: string;
+    };
+    /** @description What anyone with a shared link sees — only this place, without other members or comments. */
+    SharePreview: {
+      token: string;
+      place: {
+        /** Format: uuid */
+        id: string;
+        name: string;
+        /** @description A category id; `category_details` in GET /meta describes it */
+        category_id: string;
+        category_label: string;
+        address: string | null;
+        rating_avg: number | null;
+        rating_count: number;
+        gold_star_count: number;
+        /** @description Public cover image of this share (not a signed URL) */
+        cover_url: string | null;
+        cover_width: number | null;
+        cover_height: number | null;
+      };
+      shared_by: {
+        display_name: string;
+        badge: string | null;
+        /** @description Their own rating of the place (1–5), if any */
+        rating: number | null;
+      };
+    };
+    JoinRequestResult: {
+      /**
+       * @description `pending`: an admin will look at it; `allowed`: the e-mail is already on the list — sign in
+       * @enum {string}
+       */
+      status: 'pending' | 'allowed';
+    };
+    JoinRequest: {
+      /** Format: uuid */
+      id: string;
+      email: string;
+      name: string;
+      /** @enum {string} */
+      status: 'pending' | 'accepted' | 'dismissed';
+      /** Format: date-time */
+      created_at: string;
+      referred_by: {
+        /** Format: uuid */
+        id: string;
+        display_name: string;
+      } | null;
+      place: {
+        /** Format: uuid */
+        id: string;
+        name: string;
+      } | null;
+      /** Format: date-time */
+      handled_at: string | null;
+      /** @description Signed in and finished onboarding */
+      joined: boolean;
+    };
+    /** @description Join requests and how sharing works, per member. */
+    JoinRequestOverview: {
+      /** @description Pending first, then the latest 100 handled */
+      items: components['schemas']['JoinRequest'][];
+      sharers: {
+        member: {
+          /** Format: uuid */
+          id: string;
+          display_name: string;
+        };
+        /** @description Places shared */
+        shares: number;
+        /** @description Times their links were opened */
+        opens: number;
+        requests: number;
+        joined: number;
+      }[];
     };
   };
   responses: never;
@@ -2155,7 +2410,7 @@ export interface operations {
             comments?: boolean;
             /** @description Someone gave a place I added a gold star */
             gold_stars?: boolean;
-            /** @description Someone whose e-mail I put on the list joined (finished onboarding) — in practice, for admins */
+            /** @description Someone joined (finished onboarding) whom I put on the list or who asked to join from my shared link; for admins also new join requests */
             joins?: boolean;
           };
         };
@@ -4535,6 +4790,280 @@ export interface operations {
         content: {
           'application/json': components['schemas']['ReportCommentList'];
         };
+      };
+      /** @description Error */
+      '4XX': {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+    };
+  };
+  postPlacesByIdShares: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PlaceShare'];
+        };
+      };
+      /** @description Error */
+      '4XX': {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+    };
+  };
+  getSharesByToken: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        token: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SharePreview'];
+        };
+      };
+      /** @description Error */
+      '4XX': {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+    };
+  };
+  postSharesByTokenOpen: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        token: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Done, no content */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Error */
+      '4XX': {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+    };
+  };
+  getSharesByTokenCover: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        token: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Done, no content */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Error */
+      '4XX': {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+    };
+  };
+  getSharesByTokenOg: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        token: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Done, no content */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Error */
+      '4XX': {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+    };
+  };
+  postJoinRequests: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': {
+          email: string;
+          name: string;
+          /** @default null */
+          share_token?: string | null;
+        };
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['JoinRequestResult'];
+        };
+      };
+      /** @description Error */
+      '4XX': {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+    };
+  };
+  getAdminJoinRequests: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['JoinRequestOverview'];
+        };
+      };
+      /** @description Error */
+      '4XX': {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+    };
+  };
+  postAdminJoinRequestsByIdAccept: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Done, no content */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Error */
+      '4XX': {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+    };
+  };
+  postAdminJoinRequestsByIdDismiss: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Done, no content */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
       /** @description Error */
       '4XX': {

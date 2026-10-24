@@ -2,6 +2,13 @@
 # The browser talks only to this host: /api/* and /files/* are proxied to the API, so photos'
 # signed URLs work as-is and no CORS is needed.
 
+# Link-preview bots (Messenger, WhatsApp, iMessage, Slack, …) get a shared place's Open Graph page from the API;
+# people get the web app (DM-45).
+map $http_user_agent $link_preview_bot {
+    default 0;
+    "~*(facebookexternalhit|facebot|meta-externalagent|whatsapp|twitterbot|telegrambot|slackbot|discordbot|linkedinbot|skypeuripreview|viber|pinterest|redditbot|applebot|embedly|iframely|vkshare|google-inspectiontool|googlebot|bingbot)" 1;
+}
+
 server {
     listen 8080;
     server_name _;
@@ -68,6 +75,15 @@ server {
         access_log off;
         default_type text/plain;
         return 200 "ok\n";
+    }
+
+    # A shared place: the API's Open Graph page for link-preview bots, else the web app.
+    location ~ ^/s/([A-Za-z0-9_-]+)/?$ {
+        if ($link_preview_bot) {
+            rewrite ^/s/([A-Za-z0-9_-]+)/?$ /shares/$1/og break;
+            proxy_pass $api;
+        }
+        try_files /index.html =404;
     }
 
     location = /admin {
