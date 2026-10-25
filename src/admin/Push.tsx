@@ -24,6 +24,7 @@ const KIND_LABEL = {
   gold_star: 'Złota Gwiazdka',
   member_joined: 'Dołączenie',
   join_request: 'Prośba o dołączenie',
+  mention: 'Wzmianka',
   admin: 'Wiadomość',
 } as const;
 
@@ -132,7 +133,8 @@ function SubscriberRow({
         <div className="data">Nowe miejsca: {NEW_PLACES[m.notifications.new_places]}</div>
         <div className="data">Komentarze: {m.notifications.comments ? 'tak' : 'nie'}</div>
         <div className="data">Złote Gwiazdki: {m.notifications.gold_stars ? 'tak' : 'nie'}</div>
-        {m.profile.role === 'admin' && <div className="data">Dołączenia: {m.notifications.joins ? 'tak' : 'nie'}</div>}
+        <div className="data">Dołączenia: {m.notifications.joins ? 'tak' : 'nie'}</div>
+        <div className="data">Wzmianki: {m.notifications.mentions ? 'tak' : 'nie'}</div>
         {m.profile.favorite_categories.length > 0 && (
           <div className="push-favorites">
             {m.profile.favorite_categories.map((c) => (

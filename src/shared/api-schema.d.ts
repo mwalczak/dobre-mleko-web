@@ -539,7 +539,7 @@ export interface paths {
     put?: never;
     /**
      * Add a comment
-     * @description 1–1000 characters after trimming.
+     * @description 1–1000 characters after trimming. `mention_ids`: members mentioned with `@Imię` — they get a push notification (`notifications.mentions`) instead of the usual one about a new comment.
      */
     post: operations['postPlacesByIdComments'];
     delete?: never;
@@ -565,8 +565,32 @@ export interface paths {
     delete: operations['deleteCommentsById'];
     options?: never;
     head?: never;
-    /** Edit my comment */
+    /**
+     * Edit my comment
+     * @description With `mention_ids` the mentions are replaced; members mentioned anew get a notification.
+     */
     patch: operations['patchCommentsById'];
+    trace?: never;
+  };
+  '/comments/{id}/reaction': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /**
+     * React to a comment
+     * @description One reaction per member and comment: another one replaces it. Also on my own comments.
+     */
+    put: operations['putCommentsByIdReaction'];
+    post?: never;
+    /** Take back my reaction */
+    delete: operations['deleteCommentsByIdReaction'];
+    options?: never;
+    head?: never;
+    patch?: never;
     trace?: never;
   };
   '/photos': {
@@ -1280,6 +1304,8 @@ export interface components {
       gold_stars: boolean;
       /** @description Someone joined (finished onboarding) whom I put on the list or who asked to join from my shared link; for admins also new join requests */
       joins: boolean;
+      /** @description Someone mentioned me (@) in a comment */
+      mentions: boolean;
     };
     /** @description The signed-in member. */
     Me: {
@@ -1421,6 +1447,11 @@ export interface components {
       service: number | null;
       value: number | null;
     };
+    /**
+     * @description A reaction to a comment, in display order: love (Uwielbiam), like (Super), haha, wow, yum (Pycha), fire (Petarda), sad (Smutno). The apps draw them as Bauhaus glyphs.
+     * @enum {string}
+     */
+    Reaction: 'love' | 'like' | 'haha' | 'wow' | 'yum' | 'fire' | 'sad';
     Comment: {
       /** Format: uuid */
       id: string;
@@ -1433,6 +1464,20 @@ export interface components {
       created_at: string;
       /** Format: date-time */
       updated_at: string | null;
+      /** @description Reactions given, in display order (only those with a count) */
+      reactions: {
+        reaction: components['schemas']['Reaction'];
+        count: number;
+        /** @description Who reacted, first come first */
+        names: string[];
+      }[];
+      my_reaction: components['schemas']['Reaction'] | null;
+      /** @description Members mentioned (`@Imię` in the text) — the apps highlight and link them */
+      mentions: {
+        /** Format: uuid */
+        id: string;
+        display_name: string;
+      }[];
     };
     PlaceDetail: {
       /** Format: uuid */
@@ -1825,7 +1870,7 @@ export interface components {
       /** Format: date-time */
       created_at: string;
       /** @enum {string} */
-      kind: 'new_place' | 'new_comment' | 'gold_star' | 'member_joined' | 'join_request' | 'admin';
+      kind: 'new_place' | 'new_comment' | 'gold_star' | 'member_joined' | 'join_request' | 'mention' | 'admin';
       title: string;
       body: string;
       /** Format: uuid */
@@ -2412,6 +2457,8 @@ export interface operations {
             gold_stars?: boolean;
             /** @description Someone joined (finished onboarding) whom I put on the list or who asked to join from my shared link; for admins also new join requests */
             joins?: boolean;
+            /** @description Someone mentioned me (@) in a comment */
+            mentions?: boolean;
           };
         };
       };
@@ -3620,6 +3667,11 @@ export interface operations {
       content: {
         'application/json': {
           body: string;
+          /**
+           * @description Members mentioned with `@Imię` in the text: they get a push notification
+           * @default []
+           */
+          mention_ids?: string[];
         };
       };
     };
@@ -3686,9 +3738,80 @@ export interface operations {
       content: {
         'application/json': {
           body: string;
+          /** @description Members mentioned with `@Imię` in the text: they get a push notification */
+          mention_ids?: string[];
         };
       };
     };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Comment'];
+        };
+      };
+      /** @description Error */
+      '4XX': {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+    };
+  };
+  putCommentsByIdReaction: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': {
+          /** @enum {string} */
+          reaction: 'love' | 'like' | 'haha' | 'wow' | 'yum' | 'fire' | 'sad';
+        };
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Comment'];
+        };
+      };
+      /** @description Error */
+      '4XX': {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+    };
+  };
+  deleteCommentsByIdReaction: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
     responses: {
       /** @description OK */
       200: {

@@ -1999,3 +1999,106 @@ input[type='range'] {
   flex-basis: 100%;
   margin-bottom: 0;
 }
+
+/* Reactions to comments (DM-40). */
+.reactions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-2) 0;
+}
+
+.reaction-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 32px;
+  padding: 0 var(--space-2);
+  background: var(--paper);
+  border: var(--line-1);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.reaction-chip[aria-pressed='true'] {
+  border-width: 3px;
+  background: var(--surface);
+  font-weight: 700;
+}
+
+.reaction-add {
+  min-height: 32px;
+  padding: 0 var(--space-2);
+  background: none;
+  border: var(--line-1);
+  border-style: dashed;
+  font: 500 12px/1 var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.reaction-picker {
+  flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  border: var(--line-2);
+  background: var(--paper);
+}
+
+.reaction-picker button {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  background: none;
+  border: 2px solid transparent;
+  cursor: pointer;
+}
+
+.reaction-picker button[aria-pressed='true'],
+.reaction-picker button:hover {
+  border-color: var(--ink);
+}
+
+.reaction-cancel {
+  font: 900 24px/1 var(--sans);
+  color: var(--ink);
+}
+
+/* @mentions (DM-40). */
+.mention {
+  font-weight: 700;
+}
+
+.mention-field {
+  position: relative;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.mention-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: var(--line-2);
+  background: var(--paper);
+}
+
+.mention-list li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  cursor: pointer;
+}
+
+.mention-list li[aria-selected='true'] {
+  background: var(--yellow);
+  color: var(--ink);
+}

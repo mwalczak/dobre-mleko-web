@@ -11,6 +11,8 @@ import { useToast } from '../../shared/components/Toast';
 import { ago, count, date, day, distance, PRICE, rating } from '../../shared/format';
 import { useMe } from '../../shared/session';
 import { ColumnBars, CriteriaBars } from '../components/Bars';
+import { MentionText, MentionTextarea, mentionIds, type Mention } from '../components/MentionText';
+import { CommentReactions } from '../components/Reactions';
 import { SharePlace } from '../components/SharePlace';
 import { useGeo } from '../geo';
 
@@ -250,10 +252,18 @@ function Gallery({ p }: { p: PlaceDetail }) {
 function Comments({ p, refresh }: { p: PlaceDetail; refresh: () => Promise<unknown> }) {
   const toast = useToast();
   const [body, setBody] = useState('');
+  const [mentions, setMentions] = useState<Mention[]>([]);
   const add = useMutation({
-    mutationFn: () => unwrap(api.POST('/places/{id}/comments', { params: { path: { id: p.id } }, body: { body } })),
+    mutationFn: () =>
+      unwrap(
+        api.POST('/places/{id}/comments', {
+          params: { path: { id: p.id } },
+          body: { body, mention_ids: mentionIds(body, mentions) },
+        }),
+      ),
     onSuccess: () => {
       setBody('');
+      setMentions([]);
       return refresh();
     },
     onError: toast.fail,
@@ -276,7 +286,13 @@ function Comments({ p, refresh }: { p: PlaceDetail; refresh: () => Promise<unkno
         }}
       >
         <label htmlFor="comment">Dodaj komentarz</label>
-        <textarea id="comment" rows={3} maxLength={1000} value={body} onChange={(e) => setBody(e.target.value)} />
+        <MentionTextarea
+          id="comment"
+          value={body}
+          onChange={setBody}
+          mentions={mentions}
+          onMentionsChange={setMentions}
+        />
         <button type="submit" className="btn btn-primary" disabled={!body.trim() || add.isPending}>
           Dodaj
         </button>
@@ -290,9 +306,11 @@ function CommentItem({ c, refresh }: { c: Comment; refresh: () => Promise<unknow
   const toast = useToast();
   const [editing, setEditing] = useState(false);
   const [body, setBody] = useState(c.body);
+  const [mentions, setMentions] = useState<Mention[]>(c.mentions);
   const path = { params: { path: { id: c.id } } };
   const edit = useMutation({
-    mutationFn: () => unwrap(api.PATCH('/comments/{id}', { ...path, body: { body } })),
+    mutationFn: () =>
+      unwrap(api.PATCH('/comments/{id}', { ...path, body: { body, mention_ids: mentionIds(body, mentions) } })),
     onSuccess: () => {
       setEditing(false);
       return refresh();
@@ -320,12 +338,12 @@ function CommentItem({ c, refresh }: { c: Comment; refresh: () => Promise<unknow
               edit.mutate();
             }}
           >
-            <textarea
-              rows={3}
-              maxLength={1000}
+            <MentionTextarea
               value={body}
-              onChange={(e) => setBody(e.target.value)}
-              aria-label="Treść"
+              onChange={setBody}
+              mentions={mentions}
+              onMentionsChange={setMentions}
+              label="Treść"
             />
             <div className="row">
               <button type="submit" className="btn btn-primary btn-small" disabled={!body.trim()}>
@@ -337,7 +355,12 @@ function CommentItem({ c, refresh }: { c: Comment; refresh: () => Promise<unknow
             </div>
           </form>
         ) : (
-          <p>{c.body}</p>
+          <>
+            <p>
+              <MentionText text={c.body} mentions={c.mentions} />
+            </p>
+            <CommentReactions c={c} refresh={refresh} />
+          </>
         )}
         {!editing && (c.is_mine || me?.is_admin) && (
           <div className="row">

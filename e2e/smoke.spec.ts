@@ -200,8 +200,31 @@ test('share a place: anyone with the link sees it and can ask to join', async ({
   await expect(row).toContainText('Odrzucono');
 });
 
+test('comments: mention someone with @ and react', async ({ page }, info) => {
+  await signIn(page, 'tomek@example.com', '/?q=kreska');
+  await page.locator('.place-card').first().click();
+  const box = page.locator('#comment');
+  await box.click();
+  await box.pressSequentially('Zajrzyj tu @zos');
+  await page.getByRole('option', { name: /@Zosia/ }).click();
+  // Unique text: earlier runs leave comments behind.
+  const tag = `(${info.project.name} ${Date.now()})`;
+  await box.pressSequentially(tag);
+  await page.getByRole('button', { name: 'Dodaj', exact: true }).click();
+  const mine = page.locator('.comment').filter({ hasText: tag });
+  await expect(mine.getByRole('link', { name: '@Zosia' })).toHaveAttribute('href', /\/members\//);
+
+  await mine.getByRole('button', { name: 'Reaguj' }).click();
+  await mine.getByRole('button', { name: 'Pycha' }).click();
+  await expect(mine.getByRole('button', { name: 'Pycha: 1' })).toHaveAttribute('aria-pressed', 'true');
+  // Tapping my reaction takes it back.
+  await mine.getByRole('button', { name: 'Pycha: 1' }).click();
+  await expect(mine.getByRole('button', { name: /Pycha:/ })).toHaveCount(0);
+});
+
 test('the author of a place links to their profile', async ({ page }) => {
-  await signIn(page, 'kuba@example.com', '/?q=pawilon');
+  // A seeded place with comments from others (the seed leaves Pawilon Nocny without any).
+  await signIn(page, 'kuba@example.com', '/?q=kreska');
   await page.locator('.place-card').first().click();
   // Comment authors (and the author line under the description) link to the member's profile.
   const author = page.locator('.comment:not(:has(.link-button)) .comment-body > p.label').first().getByRole('link');
