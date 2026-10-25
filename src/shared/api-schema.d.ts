@@ -374,6 +374,27 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/places/{id}/reaction': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /**
+     * React to the recommendation
+     * @description To „Dlaczego warto” by the person who added the place. One reaction per member and place: another one replaces it. Also on my own places.
+     */
+    put: operations['putPlacesByIdReaction'];
+    post?: never;
+    /** Take back my reaction to the recommendation */
+    delete: operations['deletePlacesByIdReaction'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/places/{id}/rating': {
     parameters: {
       query?: never;
@@ -1448,10 +1469,21 @@ export interface components {
       value: number | null;
     };
     /**
-     * @description A reaction to a comment, in display order: love (Uwielbiam), like (Super), haha, wow, yum (Pycha), fire (Petarda), sad (Smutno), cancel (Cancel, ❌). The apps draw them as Bauhaus glyphs.
+     * @description A reaction to a comment or a place recommendation, in display order: love (Uwielbiam), like (Super), haha, wow, yum (Pycha), fire (Petarda), sad (Smutno), cancel (Cancel, ❌). The apps draw them as Bauhaus glyphs.
      * @enum {string}
      */
     Reaction: 'love' | 'like' | 'haha' | 'wow' | 'yum' | 'fire' | 'sad' | 'cancel';
+    /** @description Reactions to a place recommendation (description, by its author) */
+    PlaceReactions: {
+      /** @description Reactions given, in display order (only those with a count) */
+      reactions: {
+        reaction: components['schemas']['Reaction'];
+        count: number;
+        /** @description Who reacted, first come first */
+        names: string[];
+      }[];
+      my_reaction: components['schemas']['Reaction'] | null;
+    };
     Comment: {
       /** Format: uuid */
       id: string;
@@ -1566,6 +1598,14 @@ export interface components {
       gold_stars_left: number;
       /** @description Oldest first */
       comments: components['schemas']['Comment'][];
+      /** @description Reactions to the recommendation („Dlaczego warto”, by the author), in display order */
+      reactions: {
+        reaction: components['schemas']['Reaction'];
+        count: number;
+        /** @description Who reacted, first come first */
+        names: string[];
+      }[];
+      my_reaction: components['schemas']['Reaction'] | null;
       /** @description I added this place */
       is_mine: boolean;
     };
@@ -3202,6 +3242,75 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['SavedResult'];
+        };
+      };
+      /** @description Error */
+      '4XX': {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+    };
+  };
+  putPlacesByIdReaction: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': {
+          /** @enum {string} */
+          reaction: 'love' | 'like' | 'haha' | 'wow' | 'yum' | 'fire' | 'sad' | 'cancel';
+        };
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PlaceReactions'];
+        };
+      };
+      /** @description Error */
+      '4XX': {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+    };
+  };
+  deletePlacesByIdReaction: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PlaceReactions'];
         };
       };
       /** @description Error */

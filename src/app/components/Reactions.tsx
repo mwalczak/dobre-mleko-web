@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
-import { api, unwrap, type Comment } from '../../shared/api';
+import { api, unwrap, type Comment, type PlaceDetail } from '../../shared/api';
 import { useToast } from '../../shared/components/Toast';
 import { reaction, REACTIONS, type ReactionId } from '../../shared/reactions';
 
@@ -13,40 +13,41 @@ export function ReactionGlyph({ id, size = 20 }: { id: ReactionId; size?: number
   );
 }
 
+type Given = { reaction: ReactionId; count: number; names: string[] };
+
 /**
- * Reactions under a comment (DM-40): what people gave, with counts (tap one to give or take back the same), and
- * „Reaguj” — a row of the 8 glyphs and „Usuń” (takes mine back). One reaction per person.
+ * Reactions (DM-40): what people gave, with counts (tap one to give or take back the same), and „Reaguj” — a row
+ * of the 8 glyphs and „Usuń” (takes mine back). One reaction per person. `set` saves mine (null takes it back).
  */
-export function CommentReactions({ c, refresh }: { c: Comment; refresh: () => Promise<unknown> }) {
+function Reactions({
+  reactions,
+  mine,
+  set,
+}: {
+  reactions: Given[];
+  mine: ReactionId | null;
+  set: (id: ReactionId | null) => Promise<unknown>;
+}) {
   const toast = useToast();
   const [picking, setPicking] = useState(false);
-  const path = { params: { path: { id: c.id } } };
-  const set = useMutation({
-    mutationFn: (id: ReactionId | null) =>
-      unwrap(
-        id
-          ? api.PUT('/comments/{id}/reaction', { ...path, body: { reaction: id } })
-          : api.DELETE('/comments/{id}/reaction', path),
-      ),
-    onSuccess: () => {
-      setPicking(false);
-      return refresh();
-    },
+  const save = useMutation({
+    mutationFn: set,
+    onSuccess: () => setPicking(false),
     onError: toast.fail,
   });
-  const toggle = (id: ReactionId) => set.mutate(c.my_reaction === id ? null : id);
+  const toggle = (id: ReactionId) => save.mutate(mine === id ? null : id);
 
   return (
     <div className="reactions">
-      {c.reactions.map((r) => (
+      {reactions.map((r) => (
         <button
           key={r.reaction}
           type="button"
           className="reaction-chip"
-          aria-pressed={c.my_reaction === r.reaction}
+          aria-pressed={mine === r.reaction}
           aria-label={`${reaction(r.reaction).label}: ${r.count}`}
           title={`${reaction(r.reaction).label}: ${r.names.join(', ')}`}
-          disabled={set.isPending}
+          disabled={save.isPending}
           onClick={() => toggle(r.reaction)}
         >
           <ReactionGlyph id={r.reaction} size={16} />
@@ -58,7 +59,7 @@ export function CommentReactions({ c, refresh }: { c: Comment; refresh: () => Pr
         className="reaction-add"
         aria-expanded={picking}
         onClick={() => setPicking(!picking)}
-        disabled={set.isPending}
+        disabled={save.isPending}
       >
         Reaguj
       </button>
@@ -70,19 +71,19 @@ export function CommentReactions({ c, refresh }: { c: Comment; refresh: () => Pr
               type="button"
               aria-label={r.label}
               title={r.label}
-              aria-pressed={c.my_reaction === r.id}
-              onClick={() => set.mutate(r.id)}
+              aria-pressed={mine === r.id}
+              onClick={() => save.mutate(r.id)}
             >
               <ReactionGlyph id={r.id} size={24} />
             </button>
           ))}
-          {c.my_reaction && (
+          {mine && (
             <button
               type="button"
               className="reaction-remove"
               aria-label="Usuń reakcję"
               title="Usuń reakcję"
-              onClick={() => set.mutate(null)}
+              onClick={() => save.mutate(null)}
             >
               Usuń
             </button>
@@ -91,4 +92,32 @@ export function CommentReactions({ c, refresh }: { c: Comment; refresh: () => Pr
       )}
     </div>
   );
+}
+
+/** Reactions under a comment. */
+export function CommentReactions({ c, refresh }: { c: Comment; refresh: () => Promise<unknown> }) {
+  const path = { params: { path: { id: c.id } } };
+  const set = async (id: ReactionId | null) => {
+    await unwrap(
+      id
+        ? api.PUT('/comments/{id}/reaction', { ...path, body: { reaction: id } })
+        : api.DELETE('/comments/{id}/reaction', path),
+    );
+    await refresh();
+  };
+  return <Reactions reactions={c.reactions} mine={c.my_reaction} set={set} />;
+}
+
+/** Reactions to a place's recommendation („Dlaczego warto”, by the person who added it). */
+export function PlaceReactions({ p, refresh }: { p: PlaceDetail; refresh: () => Promise<unknown> }) {
+  const path = { params: { path: { id: p.id } } };
+  const set = async (id: ReactionId | null) => {
+    await unwrap(
+      id
+        ? api.PUT('/places/{id}/reaction', { ...path, body: { reaction: id } })
+        : api.DELETE('/places/{id}/reaction', path),
+    );
+    await refresh();
+  };
+  return <Reactions reactions={p.reactions} mine={p.my_reaction} set={set} />;
 }

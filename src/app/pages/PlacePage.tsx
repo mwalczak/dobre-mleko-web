@@ -12,7 +12,7 @@ import { ago, count, date, day, distance, PRICE, rating } from '../../shared/for
 import { useMe } from '../../shared/session';
 import { ColumnBars, CriteriaBars } from '../components/Bars';
 import { MentionText, MentionTextarea, mentionIds, type Mention } from '../components/MentionText';
-import { CommentReactions } from '../components/Reactions';
+import { CommentReactions, PlaceReactions } from '../components/Reactions';
 import { SharePlace } from '../components/SharePlace';
 import { useGeo } from '../geo';
 
@@ -146,15 +146,21 @@ function Place({ p }: { p: PlaceDetail }) {
         <SharePlace place={p} />
       </div>
 
-      {p.description && (
-        <section className="place-section">
-          <h2 className="label">Dlaczego warto</h2>
-          <p className="place-description">{p.description}</p>
-          <p className="label">
-            — <MemberLink member={p.author} />, dodał(a) {date(p.created_at)}
-          </p>
-        </section>
-      )}
+      {/* The recommendation of whoever added the place; people react to it (also without a description). */}
+      <section className="place-section">
+        {p.description && (
+          <>
+            <h2 className="label">Dlaczego warto</h2>
+            <p className="place-description">{p.description}</p>
+          </>
+        )}
+        <p className="label">
+          {p.description ? '— ' : 'Dodał(a) '}
+          <MemberLink member={p.author} />, {p.description ? 'dodał(a) ' : ''}
+          {date(p.created_at)}
+        </p>
+        <PlaceReactions p={p} refresh={refresh} />
+      </section>
 
       {p.tags.length > 0 && (
         <div className="chips">

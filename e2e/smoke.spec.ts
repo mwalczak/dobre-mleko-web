@@ -222,6 +222,30 @@ test('comments: mention someone with @ and react', async ({ page }, info) => {
   await expect(mine.getByRole('button', { name: /Pycha:/ })).toHaveCount(0);
 });
 
+test('react to the place recommendation', async ({ page }) => {
+  await signIn(page, 'kuba@example.com', '/?q=kreska');
+  await page.locator('.place-card').first().click();
+  const section = page
+    .locator('.place-section')
+    .filter({ hasText: /dodał\(a\)/i })
+    .first();
+  // Earlier runs may have left my reaction: start from none.
+  const remove = async () => {
+    await section.getByRole('button', { name: 'Reaguj' }).click();
+    const back = section.getByRole('button', { name: 'Usuń reakcję' });
+    if (await back.isVisible()) await back.click();
+    else await section.getByRole('button', { name: 'Reaguj' }).click();
+  };
+  await remove();
+  await expect(section.locator('.reaction-chip[aria-pressed="true"]')).toHaveCount(0);
+  await section.getByRole('button', { name: 'Reaguj' }).click();
+  await section.getByRole('button', { name: 'Petarda', exact: true }).click();
+  await expect(section.getByRole('button', { name: /^Petarda: \d+$/ })).toHaveAttribute('aria-pressed', 'true');
+  await section.screenshot({ path: test.info().outputPath('recommendation.png') });
+  await remove();
+  await expect(section.locator('.reaction-chip[aria-pressed="true"]')).toHaveCount(0);
+});
+
 test('place photos: arrows and thumbnails, not only swipe (DM-47)', async ({ page }) => {
   // Palarnia Ostra Kreska has many seeded photos.
   await signIn(page, 'kuba@example.com', '/?q=kreska');
