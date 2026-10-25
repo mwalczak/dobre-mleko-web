@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.dobremleko",
+      "sha256_cert_fingerprints": [
+        "0A:B8:74:48:ED:0F:79:B5:E0:52:F6:E2:34:62:0B:0C:3C:0D:B6:CB:6B:43:47:96:5A:88:C8:62:1F:CD:4F:9F"
+      ]
+    }
+  }
+]
