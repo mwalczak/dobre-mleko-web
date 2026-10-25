@@ -222,6 +222,23 @@ test('comments: mention someone with @ and react', async ({ page }, info) => {
   await expect(mine.getByRole('button', { name: /Pycha:/ })).toHaveCount(0);
 });
 
+test('place photos: arrows and thumbnails, not only swipe (DM-47)', async ({ page }) => {
+  // Palarnia Ostra Kreska has many seeded photos.
+  await signIn(page, 'kuba@example.com', '/?q=kreska');
+  await page.locator('.place-card').first().click();
+  const count = page.locator('.gallery-count');
+  await expect(count).toHaveText(/^1 \/ \d+$/);
+  await expect(page.getByRole('button', { name: 'Poprzednie zdjęcie' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Następne zdjęcie' }).click();
+  await expect(count).toHaveText(/^2 \//);
+  await page.getByRole('button', { name: 'Poprzednie zdjęcie' }).click();
+  await expect(count).toHaveText(/^1 \//);
+  await page.getByRole('button', { name: /^Zdjęcie 4 z / }).click();
+  await expect(count).toHaveText(/^4 \//);
+  await expect(page.getByRole('button', { name: /^Zdjęcie 4 z / })).toHaveAttribute('aria-current', 'true');
+  await page.locator('.gallery').screenshot({ path: test.info().outputPath('gallery.png') });
+});
+
 test('the author of a place links to their profile', async ({ page }) => {
   // A seeded place with comments from others (the seed leaves Pawilon Nocny without any).
   await signIn(page, 'kuba@example.com', '/?q=kreska');

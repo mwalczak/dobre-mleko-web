@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api, unwrap, type Comment, type PlaceDetail, type Profile } from '../../shared/api';
 import { cardColor, textOn } from '../../shared/cardStyle';
@@ -223,28 +223,80 @@ function Gallery({ p }: { p: PlaceDetail }) {
       </div>
     );
   }
+  const track = useRef<HTMLDivElement>(null);
+  const last = p.photos.length - 1;
+  // Scroll-snap alone only swipes on touch — arrows and thumbnails for mouse users (DM-47).
+  const go = (i: number) => {
+    const el = track.current;
+    if (el) el.scrollTo({ left: Math.max(0, Math.min(i, last)) * el.clientWidth, behavior: 'smooth' });
+  };
   return (
     <div className="gallery" style={vars}>
-      <div
-        className="gallery-track"
-        onScroll={(e) => {
-          const el = e.currentTarget;
-          setIndex(Math.round(el.scrollLeft / el.clientWidth));
-        }}
-      >
-        {p.photos.map((photo, i) => (
-          <PhotoImage
-            key={photo.id}
-            photo={photo}
-            alt={`${p.name}, zdjęcie ${i + 1}`}
-            className="gallery-item"
-            effect={i === 0 ? effect : undefined}
-          />
-        ))}
+      <div className="gallery-stage">
+        <div
+          ref={track}
+          className="gallery-track"
+          tabIndex={last > 0 ? 0 : undefined}
+          aria-label={last > 0 ? 'Zdjęcia — strzałki w lewo i w prawo przewijają' : undefined}
+          onScroll={(e) => {
+            const el = e.currentTarget;
+            setIndex(Math.round(el.scrollLeft / el.clientWidth));
+          }}
+        >
+          {p.photos.map((photo, i) => (
+            <PhotoImage
+              key={photo.id}
+              photo={photo}
+              alt={`${p.name}, zdjęcie ${i + 1}`}
+              className="gallery-item"
+              effect={i === 0 ? effect : undefined}
+            />
+          ))}
+        </div>
+        {index > 0 && (
+          <button
+            type="button"
+            className="gallery-arrow gallery-prev"
+            aria-label="Poprzednie zdjęcie"
+            onClick={() => go(index - 1)}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M16 4V20L6 12Z" />
+            </svg>
+          </button>
+        )}
+        {index < last && (
+          <button
+            type="button"
+            className="gallery-arrow gallery-next"
+            aria-label="Następne zdjęcie"
+            onClick={() => go(index + 1)}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M8 4V20L18 12Z" />
+            </svg>
+          </button>
+        )}
+        <span className="gallery-count data">
+          {Math.min(index + 1, p.photos.length)} / {p.photos.length}
+        </span>
       </div>
-      <span className="gallery-count data">
-        {Math.min(index + 1, p.photos.length)} / {p.photos.length}
-      </span>
+      {last > 0 && (
+        <div className="gallery-thumbs">
+          {p.photos.map((photo, i) => (
+            <button
+              key={photo.id}
+              type="button"
+              className="gallery-thumb"
+              aria-label={`Zdjęcie ${i + 1} z ${p.photos.length}`}
+              aria-current={i === index ? 'true' : undefined}
+              onClick={() => go(i)}
+            >
+              <PhotoImage photo={photo} thumb alt="" />
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

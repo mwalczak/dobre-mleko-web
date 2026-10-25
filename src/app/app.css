@@ -742,6 +742,70 @@ input[type='range'] {
   scroll-snap-align: start;
 }
 
+.gallery-stage {
+  position: relative;
+}
+
+.gallery-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: var(--line-2);
+  border-radius: 0;
+  background: var(--card, var(--ink));
+  color: var(--card-on, var(--paper));
+  cursor: pointer;
+}
+
+.gallery-arrow svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+.gallery-prev {
+  left: 12px;
+}
+
+.gallery-next {
+  right: 12px;
+}
+
+.gallery-thumbs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  padding: 4px;
+  border-top: var(--line-2);
+  scrollbar-width: none;
+}
+
+.gallery-thumb {
+  flex: 0 0 auto;
+  width: 64px;
+  height: 48px;
+  padding: 0;
+  border: var(--line-2);
+  border-color: transparent;
+  border-radius: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.gallery-thumb[aria-current='true'] {
+  border-color: var(--ink);
+}
+
+.gallery-thumb .photo {
+  width: 100%;
+  height: 100%;
+}
+
 .gallery-empty {
   background: var(--card);
   aspect-ratio: 16 / 6;
