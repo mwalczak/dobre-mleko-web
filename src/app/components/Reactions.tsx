@@ -15,7 +15,7 @@ export function ReactionGlyph({ id, size = 20 }: { id: ReactionId; size?: number
 
 /**
  * Reactions under a comment (DM-40): what people gave, with counts (tap one to give or take back the same), and
- * „Reaguj” — a row of the 7 glyphs and „Usuń reakcję”. One reaction per person.
+ * „Reaguj” — a row of the 8 glyphs and „Usuń” (takes mine back). One reaction per person.
  */
 export function CommentReactions({ c, refresh }: { c: Comment; refresh: () => Promise<unknown> }) {
   const toast = useToast();
@@ -79,12 +79,12 @@ export function CommentReactions({ c, refresh }: { c: Comment; refresh: () => Pr
           {c.my_reaction && (
             <button
               type="button"
-              className="reaction-cancel"
+              className="reaction-remove"
               aria-label="Usuń reakcję"
               title="Usuń reakcję"
               onClick={() => set.mutate(null)}
             >
-              ×
+              Usuń
             </button>
           )}
         </div>

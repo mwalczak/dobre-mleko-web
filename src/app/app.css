@@ -2065,8 +2065,12 @@ input[type='range'] {
   border-color: var(--ink);
 }
 
-.reaction-cancel {
-  font: 900 24px/1 var(--sans);
+.reaction-picker .reaction-remove {
+  width: auto;
+  padding: 0 var(--space-2);
+  font: 500 12px/1 var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--ink);
 }
 

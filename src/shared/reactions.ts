@@ -55,6 +55,12 @@ export const REACTIONS: { id: ReactionId; label: string; color: string; path: st
     color: 'var(--blue)',
     path: `${FACE} ${EYES} M7.4 17.6A4.6 4.6 0 0 1 16.6 17.6H14.4A2.4 2.4 0 0 0 9.6 17.6Z`,
   },
+  {
+    id: 'cancel',
+    label: 'Cancel',
+    color: 'var(--red)',
+    path: 'M5.6 3L12 9.4L18.4 3L21 5.6L14.6 12L21 18.4L18.4 21L12 14.6L5.6 21L3 18.4L9.4 12L3 5.6Z',
+  },
 ];
 
 export const reaction = (id: ReactionId) => REACTIONS.find((r) => r.id === id)!;

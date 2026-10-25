@@ -1448,10 +1448,10 @@ export interface components {
       value: number | null;
     };
     /**
-     * @description A reaction to a comment, in display order: love (Uwielbiam), like (Super), haha, wow, yum (Pycha), fire (Petarda), sad (Smutno). The apps draw them as Bauhaus glyphs.
+     * @description A reaction to a comment, in display order: love (Uwielbiam), like (Super), haha, wow, yum (Pycha), fire (Petarda), sad (Smutno), cancel (Cancel, ❌). The apps draw them as Bauhaus glyphs.
      * @enum {string}
      */
-    Reaction: 'love' | 'like' | 'haha' | 'wow' | 'yum' | 'fire' | 'sad';
+    Reaction: 'love' | 'like' | 'haha' | 'wow' | 'yum' | 'fire' | 'sad' | 'cancel';
     Comment: {
       /** Format: uuid */
       id: string;
@@ -3777,7 +3777,7 @@ export interface operations {
       content: {
         'application/json': {
           /** @enum {string} */
-          reaction: 'love' | 'like' | 'haha' | 'wow' | 'yum' | 'fire' | 'sad';
+          reaction: 'love' | 'like' | 'haha' | 'wow' | 'yum' | 'fire' | 'sad' | 'cancel';
         };
       };
     };
