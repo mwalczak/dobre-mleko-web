@@ -107,6 +107,11 @@ certificate, in the API's `dobre-mleko` namespace. nginx proxies `/api/*` and `/
 inside the cluster, so the browser sees one origin; it also sets the CSP, long caching for hashed assets and the
 fallbacks to `index.html` and `admin/index.html` for client-side routes.
 
+A scheduled run every Monday at 03:37 UTC (ten minutes after the API's) rebuilds the latest `main` without cache
+(fresh `nginx:1.28-alpine`, Alpine package upgrades) and redeploys it, if CI passed on that commit. Image tags are
+`<sha>-<run number>`, so the rebuild of an unchanged commit still rolls out. GitHub turns schedules off after 60 days
+without commits (Actions → Build and deploy → Enable workflow).
+
 - Repository secrets: `VPS_HOST`, `VPS_SSH_KEY` (the same as the API's).
 - Repository variable: `WEB_HOST`, the web app's domain, with a DNS record pointing at the server.
 - Google sign-in: the API's `GOOGLE_WEB_CLIENT_ID` must list `https://<WEB_HOST>` as an authorised JavaScript

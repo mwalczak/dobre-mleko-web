@@ -9,6 +9,7 @@ ARG VITE_GEOCODER_URL
 RUN npm run build
 
 FROM nginx:1.28-alpine
+RUN apk upgrade --no-cache
 # API_UPSTREAM: where /api and /files go (the API's in-cluster service by default).
 # MAP_ORIGINS: hosts the map style and tiles load from; GEOCODER_ORIGIN: the place search (Photon). Both for the
 # CSP's connect-src, so they must match VITE_MAP_STYLE and VITE_GEOCODER_URL.
